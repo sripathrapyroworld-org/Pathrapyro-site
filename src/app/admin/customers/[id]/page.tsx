@@ -4,6 +4,7 @@ import { CustomerQuoteForm } from "@/components/customer-quote-form";
 import { LeadStatusForm } from "@/components/lead-status-form";
 import { prisma } from "@/lib/prisma";
 import { resolveCartLinesAdmin } from "@/lib/checkout";
+import { cartQuoteKey, quoteAppliesForCart } from "@/lib/cart-quote";
 import { getSettings } from "@/lib/settings";
 import { cartTotals, formatInr, mediaUrl, waLink } from "@/lib/utils";
 
@@ -44,12 +45,14 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
     .filter(Boolean) as { kind: "product" | "combo"; id: string; qty: number }[];
 
   const { lines, warnings } = raw.length ? await resolveCartLinesAdmin(raw) : { lines: [], warnings: [] };
+  const cartKey = cartQuoteKey(raw);
+  const quoteApplies = quoteAppliesForCart(customer, cartKey);
   const cartQty = customer.cartItems.reduce((s, i) => s + i.qty, 0);
   const totals = cartTotals(lines, {
     gstPercent: settings.gstPercent,
     packingCharge: customer.packingCharge,
     shippingCharge: customer.shippingCharge,
-    feesPending: !customer.quoteReady,
+    feesPending: !quoteApplies,
   });
   const openEnquiries = customer.leads.filter((l) => l.status === "new" || l.status === "contacted").length;
   const paidOrders = customer.orders.filter((o) => o.paymentStatus === "paid").length;
@@ -108,8 +111,8 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
       <section className="card panel static customer-section">
         <div className="customer-section-head">
           <h3>Quote &amp; checkout</h3>
-          <span className={`pill ${customer.quoteReady ? "converted" : "new"}`}>
-            {customer.quoteReady ? "Checkout enabled" : "Awaiting quote"}
+          <span className={`pill ${quoteApplies ? "converted" : customer.quoteReady ? "contacted" : "new"}`}>
+            {quoteApplies ? "Checkout enabled" : customer.quoteReady ? "Cart changed — re-approve" : "Awaiting quote"}
           </span>
         </div>
         <p className="cell-sub" style={{ marginBottom: 14 }}>
@@ -121,7 +124,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             id: customer.id,
             packingCharge: customer.packingCharge,
             shippingCharge: customer.shippingCharge,
-            quoteReady: customer.quoteReady,
+            quoteReady: quoteApplies,
           }}
           subtotal={totals.subtotal}
           gstPercent={totals.gstPercent}

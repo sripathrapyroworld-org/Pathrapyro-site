@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { auth } from "@/auth";
 import { resolveCartLines } from "@/lib/checkout";
+import { cartQuoteKey, quoteAppliesForCart, resetCustomerQuote } from "@/lib/cart-quote";
 import { prisma } from "@/lib/prisma";
 import { getRazorpay, razorpayConfigured } from "@/lib/razorpay";
 import { getSettings } from "@/lib/settings";
@@ -14,15 +16,6 @@ export async function POST(req: Request) {
 
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   if (!user) return NextResponse.json({ error: "Account not found." }, { status: 401 });
-  if (!user.quoteReady) {
-    return NextResponse.json(
-      {
-        error:
-          "Please enquire about your cart first. Our team will confirm packing and shipping charges before checkout.",
-      },
-      { status: 403 }
-    );
-  }
 
   const body = await req.json();
   const customer = body.customer as {
@@ -35,6 +28,17 @@ export async function POST(req: Request) {
   const rawItems = (body.items || []) as { kind: "product" | "combo"; id: string; qty: number }[];
   if (!customer?.name || !customer?.phone || !customer?.address || !customer?.pincode) {
     return NextResponse.json({ error: "Please fill all delivery details." }, { status: 400 });
+  }
+
+  const cartKey = cartQuoteKey(rawItems);
+  if (!quoteAppliesForCart(user, cartKey)) {
+    return NextResponse.json(
+      {
+        error:
+          "Please enquire about your current cart first. Our team must confirm packing and shipping for this order.",
+      },
+      { status: 403 }
+    );
   }
 
   const { lines: items, error } = await resolveCartLines(rawItems);
@@ -97,6 +101,12 @@ export async function POST(req: Request) {
       ...(customer.email ? { email: customer.email } : {}),
     },
   });
+
+  await resetCustomerQuote(session.user.id);
+  revalidateTag("carts");
+  revalidatePath("/cart");
+  revalidatePath("/checkout");
+  revalidatePath("/admin/customers");
 
   const amountPaise = totals.total * 100;
 

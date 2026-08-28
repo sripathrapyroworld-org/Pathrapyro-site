@@ -32,15 +32,17 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
   ]);
 
   let quoteReady = false;
+  let quoteCartKey = "";
   let customerPackingCharge = 0;
   let customerShippingCharge = 0;
   if (session?.user?.role === "CUSTOMER" && session.user.id) {
     const customer = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { quoteReady: true, packingCharge: true, shippingCharge: true },
+      select: { quoteReady: true, quoteCartKey: true, packingCharge: true, shippingCharge: true },
     });
     if (customer) {
       quoteReady = customer.quoteReady;
+      quoteCartKey = customer.quoteCartKey;
       customerPackingCharge = customer.packingCharge;
       customerShippingCharge = customer.shippingCharge;
     }
@@ -52,6 +54,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
         userId={session?.user?.role === "CUSTOMER" ? session.user.id : null}
         gstPercent={settings.gstPercent}
         quoteReady={quoteReady}
+        quoteCartKey={quoteCartKey}
         customerPackingCharge={customerPackingCharge}
         customerShippingCharge={customerShippingCharge}
         whatsapp={settings.whatsapp}

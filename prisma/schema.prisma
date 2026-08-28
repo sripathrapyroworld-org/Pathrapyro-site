@@ -68,6 +68,7 @@ model User {
   packingCharge  Int        @default(0)
   shippingCharge Int        @default(0)
   quoteReady     Boolean    @default(false)
+  quoteCartKey   String     @default("")
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
   orders         Order[]

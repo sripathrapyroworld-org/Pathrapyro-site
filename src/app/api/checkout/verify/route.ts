@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { resetCustomerQuote } from "@/lib/cart-quote";
 import { prisma } from "@/lib/prisma";
 import { razorpayConfigured, verifyRazorpaySignature } from "@/lib/razorpay";
 
@@ -14,7 +16,7 @@ export async function POST(req: Request) {
     if (razorpayConfigured()) {
       return NextResponse.json({ error: "Demo pay is disabled when Razorpay keys are set." }, { status: 400 });
     }
-    await markPaid(order.id, order.items);
+    await markPaid(order.id, order.userId, order.items);
     return NextResponse.json({ orderNumber: order.orderNumber });
   }
 
@@ -33,11 +35,15 @@ export async function POST(req: Request) {
       razorpaySignature: razorpay_signature,
     },
   });
-  await markPaid(order.id, order.items);
+  await markPaid(order.id, order.userId, order.items);
   return NextResponse.json({ orderNumber: order.orderNumber });
 }
 
-async function markPaid(orderId: string, items: { kind: string; refId: string | null; qty: number }[]) {
+async function markPaid(
+  orderId: string,
+  userId: string,
+  items: { kind: string; refId: string | null; qty: number }[]
+) {
   await prisma.order.update({ where: { id: orderId }, data: { paymentStatus: "paid" } });
   const shipment = await prisma.shipment.findUnique({ where: { orderId } });
   if (shipment) {
@@ -54,9 +60,10 @@ async function markPaid(orderId: string, items: { kind: string; refId: string | 
       });
     }
   }
-  await prisma.cartItem.deleteMany({
-    where: {
-      user: { orders: { some: { id: orderId } } },
-    },
-  }).catch(() => {});
+  await prisma.cartItem.deleteMany({ where: { userId } });
+  await resetCustomerQuote(userId);
+  revalidateTag("carts");
+  revalidatePath("/cart");
+  revalidatePath("/checkout");
+  revalidatePath("/admin/customers");
 }

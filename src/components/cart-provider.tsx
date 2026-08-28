@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { useSession } from "next-auth/react";
 import type { CartLine } from "@/lib/utils";
 import { cartTotals } from "@/lib/utils";
+import { cartQuoteKeyFromLines } from "@/lib/cart-quote";
 import { requireCustomerLogin } from "@/components/login-gate";
 
 const STORAGE = "pathra-cart-v1";
@@ -44,6 +45,7 @@ export function CartProvider({
   userId,
   gstPercent = 0,
   quoteReady = false,
+  quoteCartKey = "",
   customerPackingCharge = 0,
   customerShippingCharge = 0,
   whatsapp = "",
@@ -52,6 +54,7 @@ export function CartProvider({
   userId?: string | null;
   gstPercent?: number;
   quoteReady?: boolean;
+  quoteCartKey?: string;
   customerPackingCharge?: number;
   customerShippingCharge?: number;
   whatsapp?: string;
@@ -153,15 +156,21 @@ export function CartProvider({
 
   const clear = useCallback(() => setItems([]), []);
 
+  const cartKey = useMemo(() => cartQuoteKeyFromLines(items), [items]);
+  const quoteApplies = useMemo(
+    () => Boolean(quoteReady && quoteCartKey && cartKey && quoteCartKey === cartKey),
+    [quoteReady, quoteCartKey, cartKey]
+  );
+
   const totals = useMemo(
     () =>
       cartTotals(items, {
         gstPercent,
-        feesPending: !quoteReady,
+        feesPending: !quoteApplies,
         packingCharge: customerPackingCharge,
         shippingCharge: customerShippingCharge,
       }),
-    [items, gstPercent, quoteReady, customerPackingCharge, customerShippingCharge]
+    [items, gstPercent, quoteApplies, customerPackingCharge, customerShippingCharge]
   );
   const count = totals.count;
 
@@ -172,7 +181,7 @@ export function CartProvider({
       totals,
       loggedIn,
       sessionPending,
-      quoteReady,
+      quoteReady: quoteApplies,
       whatsapp,
       gstPercent,
       add,
@@ -189,7 +198,7 @@ export function CartProvider({
       totals,
       loggedIn,
       sessionPending,
-      quoteReady,
+      quoteApplies,
       whatsapp,
       gstPercent,
       add,

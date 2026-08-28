@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { auth } from "@/auth";
 import { resolveCartLines } from "@/lib/checkout";
+import { cartQuoteKey, resetCustomerQuote } from "@/lib/cart-quote";
 import { prisma } from "@/lib/prisma";
 import type { CartLine } from "@/lib/utils";
 
@@ -32,6 +33,22 @@ export async function PUT(req: Request) {
     return NextResponse.json({ ok: true });
   }
   const { items } = (await req.json()) as { items: CartLine[] };
+  const nextKey = cartQuoteKey(
+    (items || []).map((i) => ({
+      kind: i.kind,
+      id: i.id,
+      qty: i.qty,
+    }))
+  );
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { quoteReady: true, quoteCartKey: true },
+  });
+  if (user?.quoteReady && user.quoteCartKey && user.quoteCartKey !== nextKey) {
+    await resetCustomerQuote(session.user.id);
+  }
+
   await prisma.cartItem.deleteMany({ where: { userId: session.user.id } });
   for (const i of items || []) {
     await prisma.cartItem.create({
@@ -45,5 +62,7 @@ export async function PUT(req: Request) {
   }
   revalidateTag("carts");
   revalidatePath("/admin/customers");
+  revalidatePath("/cart");
+  revalidatePath("/checkout");
   return NextResponse.json({ ok: true });
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AccountNav } from "@/components/account-nav";
 import { ProfileForm } from "@/components/profile-form";
 import { formatInr } from "@/lib/utils";
+import { cartQuoteKey, quoteAppliesForCart } from "@/lib/cart-quote";
 import { resolveCartLinesAdmin } from "@/lib/checkout";
 import { cartTotals } from "@/lib/utils";
 import { getSettings } from "@/lib/settings";
@@ -29,9 +30,11 @@ export default async function AccountPage() {
     })
     .filter(Boolean) as { kind: "product" | "combo"; id: string; qty: number }[];
   const { lines } = raw.length ? await resolveCartLinesAdmin(raw) : { lines: [] };
+  const cartKey = cartQuoteKey(raw);
+  const quoteApplies = quoteAppliesForCart(user, cartKey);
   const totals = cartTotals(lines, {
     gstPercent: settings.gstPercent,
-    feesPending: !user.quoteReady,
+    feesPending: !quoteApplies,
     packingCharge: user.packingCharge,
     shippingCharge: user.shippingCharge,
   });

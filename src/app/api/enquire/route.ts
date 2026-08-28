@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { auth } from "@/auth";
+import { resetCustomerQuote } from "@/lib/cart-quote";
 import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/settings";
 import { cartTotals, formatInr, waLink } from "@/lib/utils";
@@ -52,6 +53,7 @@ export async function POST(req: Request) {
     lines.push(`Subtotal: ${formatInr(totals.subtotal)}`);
     if (totals.gstAmount) lines.push(`Est. GST (${totals.gstPercent}%): ${formatInr(totals.gstAmount)}`);
     lines.push("Please share packing and shipping charges for my order.");
+    await resetCustomerQuote(user.id);
   } else if (kind === "product") {
     const name = String(body.name || "Product").trim();
     const qty = Math.max(1, Number(body.qty) || 1);

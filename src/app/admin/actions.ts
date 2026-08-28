@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { serializeComboItems, type ComboItemsData } from "@/lib/combo-items";
 import { prisma } from "@/lib/prisma";
 import { saveSettings, type SiteSettings, fromIstDatetimeLocal, DEFAULT_SETTINGS } from "@/lib/settings";
+import { cartQuoteKey, currentCustomerCartKey, resetCustomerQuote } from "@/lib/cart-quote";
 import { removeUpload, saveUpload } from "@/lib/uploads";
 import { slugify } from "@/lib/utils";
 
@@ -176,10 +177,19 @@ export async function saveCustomerQuote(formData: FormData): Promise<ActionResul
     const packingCharge = Math.max(0, Math.round(Number(formData.get("packingCharge") || 0) || 0));
     const shippingCharge = Math.max(0, Math.round(Number(formData.get("shippingCharge") || 0) || 0));
     const quoteReady = formData.get("quoteReady") === "on";
+    const cartKey = await currentCustomerCartKey(userId);
+    if (quoteReady && !cartKey) {
+      return { ok: false, error: "Customer cart is empty. Cannot approve checkout without items." };
+    }
 
     await prisma.user.update({
       where: { id: userId },
-      data: { packingCharge, shippingCharge, quoteReady },
+      data: {
+        packingCharge,
+        shippingCharge,
+        quoteReady,
+        quoteCartKey: quoteReady ? cartKey : "",
+      },
     });
 
     revalidatePath(`/admin/customers/${userId}`);

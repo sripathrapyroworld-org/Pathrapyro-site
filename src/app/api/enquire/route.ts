@@ -23,7 +23,8 @@ export async function POST(req: Request) {
   let interest = "WhatsApp enquiry";
   let notes = "";
   let source = "WhatsApp";
-  const lines: string[] = [`Hi, this is ${user.name} (${user.phone}).`];
+  const contactPhone = user.phone || "not provided";
+  const lines: string[] = [`Hi, this is ${user.name} (${contactPhone}).`];
 
   if (kind === "cart") {
     const items = (body.items || []) as { name: string; qty: number; sale: number; mrp: number; cat?: string }[];
@@ -74,7 +75,7 @@ export async function POST(req: Request) {
     data: {
       userId: user.id,
       name: user.name,
-      phone: user.phone,
+      phone: user.phone || "",
       interest,
       source,
       status: "new",

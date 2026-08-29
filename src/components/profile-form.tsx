@@ -19,6 +19,7 @@ export function ProfileForm({
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const phoneMissing = !phone;
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -41,7 +42,16 @@ export function ProfileForm({
       </div>
       <div className="field">
         <label>Phone</label>
-        <input readOnly value={phone} />
+        {phoneMissing ? (
+          <>
+            <input name="phone" required placeholder="10-digit mobile" autoComplete="tel" />
+            <p className="cell-sub" style={{ marginTop: 6 }}>
+              Add your mobile for WhatsApp enquiries and delivery updates.
+            </p>
+          </>
+        ) : (
+          <input readOnly value={phone} />
+        )}
       </div>
       <div className="field">
         <label>Email</label>

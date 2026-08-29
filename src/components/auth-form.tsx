@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { GoogleSignInButton } from "@/components/google-one-tap";
 import { safeReturnTo } from "@/components/login-gate";
+
+const googleEnabled = Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
 
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const params = useSearchParams();
@@ -16,6 +19,10 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     const code = params.get("error");
     if (code === "CredentialsSignin") {
       setErr("Invalid phone/email or password");
+    } else if (code === "AccessDenied") {
+      setErr("Google sign-in was blocked for this account. Try phone login or contact support.");
+    } else if (code === "OAuthAccountNotLinked") {
+      setErr("This Google email is linked to another sign-in method. Use phone/password login.");
     }
   }, [params]);
 
@@ -64,6 +71,16 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
             Log in to add items to your cart, enquire on WhatsApp, and manage your orders.
           </p>
         )}
+
+        {googleEnabled && (
+          <>
+            <GoogleSignInButton callbackUrl={from} />
+            <div className="auth-divider">
+              <span>or use phone</span>
+            </div>
+          </>
+        )}
+
         <form className="form-row" onSubmit={onSubmit}>
           {mode === "register" && (
             <div className="field">

@@ -13,10 +13,10 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: "Account not found." }, { status: 401 });
 
   const name = String(body.name || user.name).trim() || user.name;
-  const phone = String(body.phone || user.phone).trim() || user.phone;
+  const phone = String(body.phone || user.phone || "").trim();
   const message = String(body.message || "").trim();
-  if (!message) {
-    return NextResponse.json({ error: "All fields required" }, { status: 400 });
+  if (!message || !phone) {
+    return NextResponse.json({ error: "Message and phone are required." }, { status: 400 });
   }
   await prisma.lead.create({
     data: {

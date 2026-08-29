@@ -68,6 +68,9 @@ Without Supabase env vars, images save to `./uploads/` locally. With Razorpay ke
 | `RAZORPAY_KEY_ID` | Yes | From Razorpay dashboard |
 | `RAZORPAY_KEY_SECRET` | Yes | From Razorpay dashboard |
 | `NEXT_PUBLIC_RAZORPAY_KEY_ID` | Yes | Same as key ID |
+| `GOOGLE_CLIENT_ID` | Yes | Google OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | Yes | Google OAuth client secret |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Yes | Same as `GOOGLE_CLIENT_ID` |
 | `ADMIN_*` | Seed only | See `.env.example` |
 
 5. Click **Deploy site**
@@ -102,6 +105,14 @@ Update DNS at your registrar (or Cloudflare):
 
 Set `AUTH_URL` and `NEXT_PUBLIC_SITE_URL` to `https://yourdomain.com`, then redeploy.
 
+### Google Sign-In setup
+
+1. Open [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials)
+2. Create an **OAuth client ID** (Web application)
+3. Add **Authorized JavaScript origins**: `http://localhost:3000`, `https://yourdomain.com`
+4. Add **Authorized redirect URIs**: `http://localhost:3000/api/auth/callback/google`, `https://yourdomain.com/api/auth/callback/google`
+5. Copy the client ID and secret into `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
+
 ---
 
 ## Free tier limits (300 products — well within limits)
@@ -122,6 +133,7 @@ Set `AUTH_URL` and `NEXT_PUBLIC_SITE_URL` to `https://yourdomain.com`, then rede
 - Active campaign offers on live prices + server-side checkout validation
 - Cart (localStorage + DB sync for logged-in customers)
 - Guest or account checkout with Razorpay
+- Google One Tap + Google sign-in for customers (90-day sessions)
 - Order tracking with admin-uploaded courier/packaging photos
 - Admin portal: products, combos, offers, leads, sales, settings
 - Cloud image storage via Supabase (works on Netlify serverless)

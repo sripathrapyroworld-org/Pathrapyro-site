@@ -1,9 +1,16 @@
 import type { NextAuthConfig } from "next-auth";
 
+// Long-lived customer sessions — refreshed daily while the user is active.
+const CUSTOMER_SESSION_MAX_AGE = 90 * 24 * 60 * 60;
+
 export const authConfig = {
   trustHost: true,
   secret: process.env.AUTH_SECRET,
-  session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
+  session: {
+    strategy: "jwt",
+    maxAge: CUSTOMER_SESSION_MAX_AGE,
+    updateAge: 24 * 60 * 60,
+  },
   pages: {
     signIn: "/login",
   },

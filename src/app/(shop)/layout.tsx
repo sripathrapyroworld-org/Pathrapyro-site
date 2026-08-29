@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { AuthSession } from "@/components/auth-session";
 import { CartProvider } from "@/components/cart-provider";
 import { FloatingActions } from "@/components/floating-actions";
+import { GoogleOneTap } from "@/components/google-one-tap";
 import { PublicFooter } from "@/components/public-footer";
 import { PublicHeader } from "@/components/public-header";
 import { Toast } from "@/components/toast";
@@ -50,6 +51,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
 
   return (
     <AuthSession session={session}>
+      <GoogleOneTap />
       <CartProvider
         userId={session?.user?.role === "CUSTOMER" ? session.user.id : null}
         gstPercent={settings.gstPercent}

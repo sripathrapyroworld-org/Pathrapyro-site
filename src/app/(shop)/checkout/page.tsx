@@ -29,7 +29,7 @@ export default async function CheckoutPage() {
 
   const prefill = {
     name: u.name,
-    phone: u.phone,
+    phone: u.phone || "",
     email: u.email || "",
     address: u.address || "",
     pincode: u.pincode || "",

@@ -49,7 +49,7 @@ export default async function AccountPage() {
             <p style={{ color: "var(--cream-dim)", margin: "10px 0 20px" }}>Hello, {user.name}</p>
             <ProfileForm
               name={user.name}
-              phone={user.phone}
+              phone={user.phone || ""}
               email={user.email || ""}
               address={user.address || ""}
               pincode={user.pincode || ""}

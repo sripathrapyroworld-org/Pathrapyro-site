@@ -12,15 +12,23 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
             Thank you. Your payment was received
             {id ? <> and your order ID is <strong style={{ color: "var(--gold-2)" }}>{id}</strong></> : null}.
           </p>
-          <div className="cta-row" style={{ justifyContent: "center", marginTop: 28 }}>
-            {id && <Link className="btn btn-primary" href={`/track/${id}`}>Track this order</Link>}
+          <div className="order-success-actions">
+            {id && (
+              <Link className="btn btn-primary" href={`/track/${id}`}>
+                Track this order
+              </Link>
+            )}
             {id && (
               <a className="btn btn-outline" href={`/api/orders/${id}/invoice`}>
                 Download invoice PDF
               </a>
             )}
-            <Link className="btn btn-outline" href="/account/orders">My orders</Link>
-            <Link className="btn btn-ghost" href="/shop">Continue shopping</Link>
+            <Link className="btn btn-outline" href="/account/orders">
+              My orders
+            </Link>
+            <Link className="btn btn-ghost" href="/shop">
+              Continue shopping
+            </Link>
           </div>
         </div>
       </div>

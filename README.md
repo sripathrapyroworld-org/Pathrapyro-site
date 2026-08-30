@@ -71,6 +71,8 @@ Without Supabase env vars, images save to `./uploads/` locally. With Razorpay ke
 | `GOOGLE_CLIENT_ID` | Yes | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | Yes | Google OAuth client secret |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Yes | Same as `GOOGLE_CLIENT_ID` |
+| `RESEND_API_KEY` | Yes | For admin OTP emails ([resend.com](https://resend.com)) |
+| `MAIL_FROM` | Yes | Verified sender, e.g. `Sri Pathra Pyro <admin@yourdomain.com>` |
 | `ADMIN_*` | Seed only | See `.env.example` |
 
 5. Click **Deploy site**
@@ -113,6 +115,13 @@ Set `AUTH_URL` and `NEXT_PUBLIC_SITE_URL` to `https://yourdomain.com`, then rede
 4. Add **Authorized redirect URIs**: `http://localhost:3000/api/auth/callback/google`, `https://yourdomain.com/api/auth/callback/google`
 5. Copy the client ID and secret into `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
 
+### Admin email OTP (password reset)
+
+1. Sign up at [resend.com](https://resend.com) and verify your domain (or use their test sender in development)
+2. Create an API key → `RESEND_API_KEY`
+3. Set `MAIL_FROM` to a verified sender address
+4. Admin can reset password at `/admin/forgot-password` and change email/password at `/admin/account`
+
 ---
 
 ## Free tier limits (300 products — well within limits)
@@ -134,6 +143,8 @@ Set `AUTH_URL` and `NEXT_PUBLIC_SITE_URL` to `https://yourdomain.com`, then rede
 - Cart (localStorage + DB sync for logged-in customers)
 - Guest or account checkout with Razorpay
 - Google One Tap + Google sign-in for customers (90-day sessions)
+- Secure admin login (email-only, 8-hour sessions, lockout after failed attempts)
+- Admin account security: change email/password, forgot-password via email OTP
 - Order tracking with admin-uploaded courier/packaging photos
 - Admin portal: products, combos, offers, leads, sales, settings
 - Cloud image storage via Supabase (works on Netlify serverless)

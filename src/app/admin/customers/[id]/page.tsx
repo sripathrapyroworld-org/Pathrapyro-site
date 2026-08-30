@@ -70,10 +70,14 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             <div>
               <h2 className="customer-name">{customer.name}</h2>
               <p className="customer-contact">
-                <a href={`tel:${customer.phone}`}>{customer.phone}</a>
+                {customer.phone ? (
+                  <a href={`tel:${customer.phone}`}>{customer.phone}</a>
+                ) : (
+                  <span className="cell-sub">No phone on file</span>
+                )}
                 {customer.email && (
                   <>
-                    {" · "}
+                    {customer.phone ? " · " : null}
                     <a href={`mailto:${customer.email}`}>{customer.email}</a>
                   </>
                 )}
@@ -84,9 +88,11 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
               <p className="cell-sub">Joined {customer.createdAt.toLocaleDateString("en-IN")}</p>
             </div>
           </div>
-          <a className="btn btn-wa btn-sm" href={waLink(customer.phone)} target="_blank" rel="noreferrer">
-            WhatsApp customer
-          </a>
+          {customer.phone ? (
+            <a className="btn btn-wa btn-sm" href={waLink(customer.phone)} target="_blank" rel="noreferrer">
+              WhatsApp customer
+            </a>
+          ) : null}
         </div>
         <div className="customer-kpis">
           <div className="customer-kpi">

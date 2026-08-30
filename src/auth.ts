@@ -4,6 +4,12 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { authConfig } from "@/auth.config";
 import { findCustomerByIdentifier } from "@/lib/customer-auth";
+import {
+  ADMIN_SESSION_SECONDS,
+  findAdminByEmail,
+  isAdminLoginLocked,
+  recordAdminLoginAttempt,
+} from "@/lib/admin-auth";
 import { findOrCreateGoogleCustomer, verifyGoogleCredential } from "@/lib/google-auth";
 
 declare module "next-auth" {
@@ -57,6 +63,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id;
         token.role = user.role;
         token.phone = user.phone;
+        if (user.role === "ADMIN") {
+          token.exp = Math.floor(Date.now() / 1000) + ADMIN_SESSION_SECONDS;
+        }
       }
       return token;
     },
@@ -119,11 +128,35 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const portal = String(credentials?.portal || "customer");
           if (!identifier || !password) return null;
 
+          if (portal === "admin") {
+            if (!identifier.includes("@")) return null;
+            const email = identifier.toLowerCase();
+            if (await isAdminLoginLocked(email)) return null;
+
+            const user = await findAdminByEmail(email);
+            if (!user?.passwordHash) {
+              await recordAdminLoginAttempt(email, false);
+              return null;
+            }
+            const ok = await bcrypt.compare(password, user.passwordHash);
+            if (!ok) {
+              await recordAdminLoginAttempt(email, false);
+              return null;
+            }
+            await recordAdminLoginAttempt(email, true);
+            return {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              phone: user.phone,
+            };
+          }
+
           const user = await findCustomerByIdentifier(identifier);
           if (!user?.passwordHash) return null;
           const ok = await bcrypt.compare(password, user.passwordHash);
           if (!ok) return null;
-          if (portal === "admin" && user.role !== "ADMIN") return null;
           if (portal === "customer" && user.role !== "CUSTOMER") return null;
           return {
             id: user.id,

@@ -77,6 +77,29 @@ model User {
   leads          Lead[]
 }
 
+model OtpToken {
+  id        String    @id @default(cuid())
+  email     String
+  purpose   String
+  codeHash  String
+  payload   String?
+  attempts  Int       @default(0)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([email, purpose, createdAt])
+}
+
+model AdminLoginAttempt {
+  id        String   @id @default(cuid())
+  email     String
+  success   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
+}
+
 model Category {
   id          String    @id @default(cuid())
   name        String    @unique

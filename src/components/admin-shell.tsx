@@ -13,6 +13,7 @@ const LINKS = [
   { href: "/admin/offers", label: "Offer Management", ic: "🏷️", group: "Operations" },
   { href: "/admin/sales", label: "Sales Management", ic: "💰", group: "Operations" },
   { href: "/admin/settings", label: "Settings", ic: "⚙️", group: "System" },
+  { href: "/admin/account", label: "Account security", ic: "🔐", group: "System" },
 ];
 
 export function AdminShell({
@@ -30,7 +31,9 @@ export function AdminShell({
 }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
-  if (path === "/admin/login") return <>{children}</>;
+  if (path === "/admin/login" || path === "/admin/forgot-password" || path === "/admin/reset-password") {
+    return <>{children}</>;
+  }
   const current = LINKS.find((l) => (l.href === "/admin" ? path === "/admin" : path.startsWith(l.href)));
 
   return (

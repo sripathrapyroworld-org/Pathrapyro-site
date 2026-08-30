@@ -27,8 +27,9 @@ export default auth((req) => {
     }
   }
 
+  const adminPublicPaths = ["/admin/login", "/admin/forgot-password", "/admin/reset-password"];
   const adminPath = path.startsWith("/admin");
-  if (adminPath && path !== "/admin/login") {
+  if (adminPath && !adminPublicPaths.includes(path)) {
     if (!isLoggedIn || role !== "ADMIN") {
       const url = nextUrl.clone();
       url.pathname = "/admin/login";
@@ -54,6 +55,10 @@ export default auth((req) => {
 
   if (path === "/admin/login" && isLoggedIn && role === "ADMIN") {
     return NextResponse.redirect(new URL("/admin", nextUrl));
+  }
+
+  if ((path === "/admin/forgot-password" || path === "/admin/reset-password") && isLoggedIn && role === "ADMIN") {
+    return NextResponse.redirect(new URL("/admin/account", nextUrl));
   }
 
   const res = NextResponse.next();

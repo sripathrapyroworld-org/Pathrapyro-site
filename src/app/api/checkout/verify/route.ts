@@ -41,7 +41,7 @@ export async function POST(req: Request) {
 
 async function markPaid(
   orderId: string,
-  userId: string,
+  userId: string | null,
   items: { kind: string; refId: string | null; qty: number }[]
 ) {
   await prisma.order.update({ where: { id: orderId }, data: { paymentStatus: "paid" } });
@@ -60,10 +60,12 @@ async function markPaid(
       });
     }
   }
-  await prisma.cartItem.deleteMany({ where: { userId } });
-  await resetCustomerQuote(userId);
-  revalidateTag("carts");
-  revalidatePath("/cart");
-  revalidatePath("/checkout");
-  revalidatePath("/admin/customers");
+  if (userId) {
+    await prisma.cartItem.deleteMany({ where: { userId } });
+    await resetCustomerQuote(userId);
+    revalidateTag("carts");
+    revalidatePath("/cart");
+    revalidatePath("/checkout");
+    revalidatePath("/admin/customers");
+  }
 }

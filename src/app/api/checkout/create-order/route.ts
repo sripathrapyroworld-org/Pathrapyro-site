@@ -4,14 +4,13 @@ import { auth } from "@/auth";
 import { resolveCartLines } from "@/lib/checkout";
 import { cartQuoteKey, quoteAppliesForCart, resetCustomerQuote } from "@/lib/cart-quote";
 import { prisma } from "@/lib/prisma";
-import { getRazorpay, razorpayConfigured } from "@/lib/razorpay";
 import { getSettings } from "@/lib/settings";
 import { cartTotals, nextOrderNumber } from "@/lib/utils";
 
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user?.id || session.user.role !== "CUSTOMER") {
-    return NextResponse.json({ error: "Please log in to checkout." }, { status: 401 });
+    return NextResponse.json({ error: "Please log in to place an order." }, { status: 401 });
   }
 
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
@@ -86,7 +85,7 @@ export async function POST(req: Request) {
       shipment: {
         create: {
           status: "placed",
-          events: { create: { status: "placed", note: "Order created, awaiting payment" } },
+          events: { create: { status: "placed", note: "Order placed — awaiting payment" } },
         },
       },
     },
@@ -102,39 +101,15 @@ export async function POST(req: Request) {
     },
   });
 
+  await prisma.cartItem.deleteMany({ where: { userId: session.user.id } });
   await resetCustomerQuote(session.user.id);
   revalidateTag("carts");
   revalidatePath("/cart");
   revalidatePath("/checkout");
   revalidatePath("/admin/customers");
 
-  const amountPaise = totals.total * 100;
-
-  if (!razorpayConfigured()) {
-    return NextResponse.json({
-      demo: true,
-      orderId: order.id,
-      orderNumber: order.orderNumber,
-      amount: amountPaise,
-    });
-  }
-
-  const rzp = getRazorpay();
-  const rzOrder = await rzp.orders.create({
-    amount: amountPaise,
-    currency: "INR",
-    receipt: order.orderNumber,
-  });
-  await prisma.order.update({
-    where: { id: order.id },
-    data: { razorpayOrderId: rzOrder.id },
-  });
-
   return NextResponse.json({
     orderId: order.id,
     orderNumber: order.orderNumber,
-    razorpayOrderId: rzOrder.id,
-    amount: rzOrder.amount,
-    keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
   });
 }

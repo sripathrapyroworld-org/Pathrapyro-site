@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { CheckoutForm } from "@/components/checkout-form";
 import { currentCustomerCartKey, quoteAppliesForCart } from "@/lib/cart-quote";
 import { prisma } from "@/lib/prisma";
+import { privatePageMetadata } from "@/lib/seo";
 import { redirect } from "next/navigation";
+
+export const metadata: Metadata = privatePageMetadata;
 
 export default async function CheckoutPage() {
   const session = await auth();

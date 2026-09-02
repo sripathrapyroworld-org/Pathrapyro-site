@@ -18,7 +18,7 @@ export default function CartPage() {
           <h1>Your Cart</h1>
           <p>
             Review your items and send an enquiry. Our team will confirm packing and shipping charges for your order
-            before you pay.
+            before you place it.
           </p>
         </div>
       </div>
@@ -65,7 +65,7 @@ export default function CartPage() {
                   <strong>Enquire before ordering</strong>
                   <p>
                     Packing and shipping depend on your location and order size. Please enquire first — our team will
-                    apply the correct charges to your account and notify you when checkout is ready.
+                    apply the correct charges to your account and notify you when your order quote is ready.
                   </p>
                 </div>
               )}
@@ -85,12 +85,12 @@ export default function CartPage() {
                     opacity: items.length === 0 ? 0.5 : 1,
                   }}
                 >
-                  Proceed to Checkout →
+                  Place Order →
                 </Link>
               ) : (
                 items.length > 0 && (
                   <p className="cart-checkout-hint">
-                    Checkout unlocks after our team confirms packing &amp; shipping for your order.
+                    Order placement unlocks after our team confirms packing &amp; shipping for your cart.
                   </p>
                 )
               )}

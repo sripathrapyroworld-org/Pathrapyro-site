@@ -9,8 +9,9 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
           <div style={{ fontSize: "3rem" }}>🎉</div>
           <h1 style={{ marginTop: 12 }}>Order Placed</h1>
           <p style={{ color: "var(--cream-dim)", marginTop: 12 }}>
-            Thank you. Your payment was received
-            {id ? <> and your order ID is <strong style={{ color: "var(--gold-2)" }}>{id}</strong></> : null}.
+            Thank you. Your order has been placed
+            {id ? <> — order ID <strong style={{ color: "var(--gold-2)" }}>{id}</strong></> : null}.
+            Our team will contact you with payment details. Once payment is received, we will confirm and process your order.
           </p>
           <div className="order-success-actions">
             {id && (

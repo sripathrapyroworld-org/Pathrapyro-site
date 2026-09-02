@@ -73,6 +73,9 @@ export function ShopBrowser({
               ))}
             </div>
             <p className="range-note">Prices shown are festival sale rates. Stock updates live from the warehouse.</p>
+            <p className="range-note" style={{ marginTop: 10 }}>
+              <Link href="/shop">View all Sivakasi crackers online →</Link>
+            </p>
           </aside>
           <div>
             <div className="shop-toolbar">

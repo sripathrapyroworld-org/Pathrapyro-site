@@ -1,9 +1,26 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { breadcrumbSchema, SeoJsonLd } from "@/components/seo-json-ld";
 import { getSettings } from "@/lib/settings";
+import { absoluteUrl, buildMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Original Sivakasi Crackers Wholesale",
+  description:
+    "About Sri Pathra Pyro World — original Sivakasi crackers wholesale and retail supplier. 15+ years manufacturing experience, licensed PESO dealer, crackers wholesale Sivakasi from Virudhunagar.",
+  path: "/about",
+});
 
 export default async function AboutPage() {
   const settings = await getSettings();
   return (
     <>
+      <SeoJsonLd
+        data={breadcrumbSchema([
+          { name: "Home", path: absoluteUrl("/") },
+          { name: "About Us", path: absoluteUrl("/about") },
+        ])}
+      />
       <div
         className="page-hero page-hero-photo"
         style={{ backgroundImage: "url('/images/static-sparkler-sunset.jpg')" }}
@@ -12,39 +29,48 @@ export default async function AboutPage() {
           <div className="crumb">Home / <span>About Us</span></div>
           <div className="eyebrow">Our Story</div>
           <h1>About {settings.businessName}</h1>
-          <p>Bringing genuine Sivakasi-made crackers and fancy varieties to Virudhunagar and beyond.</p>
+          <p>Original Sivakasi crackers — retail and wholesale fireworks from Virudhunagar to all of Tamil Nadu.</p>
         </div>
       </div>
       <section>
         <div className="wrap about-grid">
           <div className="about-imgs">
-            <img className="a1" src="/images/about-diwali-celebration.jpg" alt="Diwali celebration with sparklers" />
-            <img className="a2" src="/images/about-crowd-fireworks.jpg" alt="Crowd watching fireworks" />
+            <img className="a1" src="/images/about-diwali-celebration.jpg" alt="Diwali celebration with Sivakasi sparklers" />
+            <img className="a2" src="/images/about-crowd-fireworks.jpg" alt="Crowd watching Sivakasi fireworks" />
           </div>
           <div className="about-copy">
             <div className="eyebrow">Company History</div>
             <h2>Rooted in Virudhunagar&apos;s Fireworks Legacy</h2>
-            <p>What began as a small family workshop producing sparklers has grown into one of the region&apos;s trusted fireworks wholesalers, supplying homes, event organisers and retailers across Tamil Nadu.</p>
-            <p>We still hand-check every batch that leaves our unit — a discipline passed down from our founder to this day.</p>
+            <p>
+              What began as a small family workshop producing sparklers has grown into one of the region&apos;s trusted
+              Sivakasi crackers wholesale suppliers, serving homes, event organisers and retailers across Tamil Nadu.
+            </p>
+            <p>
+              We supply original Sivakasi crackers direct from our factory — crackers wholesale Sivakasi for bulk buyers,
+              and retail packs for families. Every batch is hand-checked before dispatch.
+            </p>
             <ul className="check-list">
-              <li>35+ years of manufacturing experience</li>
+              <li>15+ years of manufacturing experience</li>
               <li>Genuine Sivakasi-manufactured products only</li>
               <li>PESO-compliant safety testing on every batch</li>
               <li>Licensed under Tamil Nadu explosives regulations</li>
             </ul>
+            <Link className="btn btn-outline mt-40" href="/shop">
+              Shop Sivakasi crackers online →
+            </Link>
           </div>
         </div>
       </section>
       <section style={{ paddingTop: 0 }}>
         <div className="wrap static-photo-row">
           <figure className="static-photo-card">
-            <img src="/images/static-sparkler-heart.jpg" alt="Sparkler light painting" />
+            <img src="/images/static-sparkler-heart.jpg" alt="Sivakasi sparkler light painting" />
           </figure>
           <figure className="static-photo-card">
-            <img src="/images/static-fireworks-panorama.jpg" alt="Night fireworks panorama" />
+            <img src="/images/static-fireworks-panorama.jpg" alt="Sivakasi fireworks panorama at night" />
           </figure>
           <figure className="static-photo-card">
-            <img src="/images/static-firework-fountain.jpg" alt="Golden firework fountain" />
+            <img src="/images/static-firework-fountain.jpg" alt="Golden Sivakasi firework fountain" />
           </figure>
         </div>
       </section>

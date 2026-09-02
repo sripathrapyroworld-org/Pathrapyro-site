@@ -15,7 +15,7 @@ export function CheckoutForm({ prefill }: { prefill: Prefill; loggedIn?: boolean
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
-  async function pay(e: React.FormEvent<HTMLFormElement>) {
+  async function placeOrder(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!items.length) return;
     setBusy(true);
@@ -39,60 +39,13 @@ export function CheckoutForm({ prefill }: { prefill: Prefill; loggedIn?: boolean
     });
     const data = await res.json();
     if (!res.ok) {
-      setErr(data.error || "Could not start checkout");
+      setErr(data.error || "Could not place order");
       setBusy(false);
       return;
     }
 
-    if (data.demo) {
-      const v = await fetch("/api/checkout/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: data.orderId, demo: true }),
-      });
-      const vd = await v.json();
-      if (!v.ok) {
-        setErr(vd.error || "Payment failed");
-        setBusy(false);
-        return;
-      }
-      clear();
-      router.push(`/order/success?id=${vd.orderNumber}`);
-      return;
-    }
-
-    await loadRazorpay();
-    const rzp = new (window as unknown as { Razorpay: new (o: object) => { open: () => void } }).Razorpay({
-      key: data.keyId,
-      amount: data.amount,
-      currency: "INR",
-      name: "Sri Pathra Pyro World",
-      description: `Order ${data.orderNumber}`,
-      order_id: data.razorpayOrderId,
-      prefill: { name: customer.name, contact: customer.phone, email: customer.email },
-      handler: async (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
-        const v = await fetch("/api/checkout/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId: data.orderId,
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-          }),
-        });
-        const vd = await v.json();
-        if (!v.ok) {
-          setErr(vd.error || "Verification failed");
-          setBusy(false);
-          return;
-        }
-        clear();
-        router.push(`/order/success?id=${vd.orderNumber}`);
-      },
-      modal: { ondismiss: () => setBusy(false) },
-    });
-    rzp.open();
+    clear();
+    router.push(`/order/success?id=${data.orderNumber}`);
   }
 
   if (!items.length) {
@@ -111,15 +64,18 @@ export function CheckoutForm({ prefill }: { prefill: Prefill; loggedIn?: boolean
     <>
       <div className="page-hero">
         <div className="wrap">
-          <div className="crumb">Home / Cart / <span>Checkout</span></div>
-          <div className="eyebrow">Secure Payment</div>
-          <h1>Checkout</h1>
-          <p>Your quote is confirmed. Review delivery details and pay the final amount including packing &amp; shipping.</p>
+          <div className="crumb">Home / Cart / <span>Place Order</span></div>
+          <div className="eyebrow">Confirm Order</div>
+          <h1>Place Your Order</h1>
+          <p>
+            Your quote is confirmed. Review delivery details and submit your order. Our team will share payment
+            instructions — once payment is received, we will process and dispatch your order.
+          </p>
         </div>
       </div>
       <section style={{ paddingTop: 40 }}>
         <div className="wrap cart-layout">
-          <form className="card form-card static" onSubmit={pay}>
+          <form className="card form-card static" onSubmit={placeOrder}>
             <h4 style={{ marginBottom: 16 }}>Delivery Details</h4>
             {err && <div className="alert error">{err}</div>}
             <div className="form-row">
@@ -146,8 +102,12 @@ export function CheckoutForm({ prefill }: { prefill: Prefill; loggedIn?: boolean
                 <textarea name="address" rows={3} required defaultValue={prefill.address} placeholder="Full address" />
               </div>
             </div>
+            <p className="cart-checkout-hint" style={{ marginTop: 14 }}>
+              Payment is collected offline (UPI / bank transfer / cash). You will receive a call or WhatsApp with
+              payment details after placing the order.
+            </p>
             <button className="btn btn-primary btn-block" style={{ marginTop: 18 }} disabled={busy}>
-              {busy ? "Processing…" : `Pay ${formatInr(totals.total)} with Razorpay`}
+              {busy ? "Placing order…" : `Place Order — ${formatInr(totals.total)}`}
             </button>
           </form>
           <div className="card summary-card">
@@ -161,22 +121,10 @@ export function CheckoutForm({ prefill }: { prefill: Prefill; loggedIn?: boolean
                 <span className="amt">{formatInr(i.sale * i.qty)}</span>
               </div>
             ))}
-            <TotalsBreakdown totals={totals} totalLabel="To Pay" />
+            <TotalsBreakdown totals={totals} totalLabel="Order Total" />
           </div>
         </div>
       </section>
     </>
   );
-}
-
-function loadRazorpay() {
-  return new Promise<void>((resolve, reject) => {
-    if (document.getElementById("rzp-js")) return resolve();
-    const s = document.createElement("script");
-    s.id = "rzp-js";
-    s.src = "https://checkout.razorpay.com/v1/checkout.js";
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error("Razorpay failed to load"));
-    document.body.appendChild(s);
-  });
 }

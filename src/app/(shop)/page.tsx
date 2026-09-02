@@ -1,14 +1,29 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ComboCard } from "@/components/combo-card";
 import { Countdown } from "@/components/countdown";
 import { ProductCard } from "@/components/product-card";
+import {
+  breadcrumbSchema,
+  organizationSchema,
+  SeoJsonLd,
+  websiteSchema,
+} from "@/components/seo-json-ld";
 import { SparkCanvas } from "@/components/spark-canvas";
 import { fetchPricedCombos, fetchPricedProducts, toPricedCard } from "@/lib/catalog";
 import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/settings";
+import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { comboItemsAsLabels } from "@/lib/combo-items";
 import { mediaUrl } from "@/lib/utils";
 import { WhatsAppCta } from "@/components/whatsapp-cta";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Best Sivakasi Crackers Online",
+  description:
+    "Buy original Sivakasi crackers and fireworks online at factory-direct prices. Best crackers in Sivakasi — retail & wholesale, 500+ varieties, licensed dealer, Tamil Nadu delivery.",
+  path: "/",
+});
 
 export default async function HomePage() {
   const [settings, featuredRaw, combos, categories] = await Promise.all([
@@ -28,11 +43,31 @@ export default async function HomePage() {
 
   return (
     <>
+      <SeoJsonLd
+        data={[
+          organizationSchema({
+            name: settings.businessName,
+            url: absoluteUrl("/"),
+            logo: absoluteUrl("/images/logo.png"),
+            description:
+              "Licensed Sivakasi crackers and fireworks dealer — retail and wholesale, factory-direct prices.",
+            email: settings.email,
+            phone: settings.phone,
+          }),
+          websiteSchema({
+            name: settings.businessName,
+            url: absoluteUrl("/"),
+            description:
+              "Buy Sivakasi crackers online — original fireworks, crackers wholesale Sivakasi, delivery across Tamil Nadu.",
+          }),
+          breadcrumbSchema([{ name: "Home", path: absoluteUrl("/") }]),
+        ]}
+      />
       <section className="hero" style={{ paddingBottom: 60 }}>
         <SparkCanvas />
         <div className="hero-bg-imgs">
-          <img className="i1" src="/images/hero-fireworks-display.jpg" alt="Fireworks display" />
-          <img className="i2" src="/images/hero-sparkler-hand.jpg" alt="Hand holding a sparkler" />
+          <img className="i1" src="/images/hero-fireworks-display.jpg" alt="Sivakasi fireworks display at night" />
+          <img className="i2" src="/images/hero-sparkler-hand.jpg" alt="Hand holding a Sivakasi sparkler" />
         </div>
         <span className="float-deco" style={{ top: "18%", left: "6%" }}>🎇</span>
         <span className="float-deco" style={{ top: "65%", left: "14%", animationDelay: "1.4s" }}>🪔</span>
@@ -48,7 +83,8 @@ export default async function HomePage() {
               with <span>Genuine Sivakasi</span> Crackers
             </h1>
             <p className="lead">
-              Direct-from-factory fireworks at wholesale prices. 500+ varieties — sparklers to sky shots — trusted by families across Tamil Nadu for over 35 years.
+              Buy original Sivakasi crackers online at factory-direct prices. 500+ Sivakasi fireworks varieties —
+              sparklers to sky shots — retail and wholesale, trusted across Tamil Nadu for over 15 years.
             </p>
             <div className="cta-row">
               <Link className="btn btn-primary" href="/shop">🛍️ Shop Crackers</Link>
@@ -85,18 +121,22 @@ export default async function HomePage() {
       <section>
         <div className="wrap about-grid">
           <div className="about-imgs">
-            <img className="a1" src="/images/about-diwali-celebration.jpg" alt="Diwali celebration with sparklers" />
-            <img className="a2" src="/images/about-crowd-fireworks.jpg" alt="Crowd watching fireworks" />
+            <img className="a1" src="/images/about-diwali-celebration.jpg" alt="Diwali celebration with Sivakasi sparklers" />
+            <img className="a2" src="/images/about-crowd-fireworks.jpg" alt="Crowd watching Sivakasi fireworks" />
           </div>
           <div className="about-copy">
             <div className="eyebrow">Welcome to {settings.businessName}</div>
             <h2>Virudhunagar&apos;s Trusted Name for All Kinds of Crackers & Fancy Varieties</h2>
             <p>
-              Based in Kalayarkurichi, Purnachandrapuram, we supply premium quality crackers and fancy varieties directly to customers — cutting out middlemen so you get factory-fresh products at the lowest possible price.
+              Based in Kalayarkurichi, Purnachandrapuram, we supply premium Sivakasi crackers and fancy varieties
+              directly to customers — cutting out middlemen so you get factory-fresh products at the lowest possible price.
             </p>
-            <p>Every box that leaves our warehouse is tested for safety and packed with care, so your celebrations stay joyful and worry-free.</p>
+            <p>
+              Shop online for retail orders or enquire for crackers wholesale Sivakasi — we deliver safely across Tamil
+              Nadu. Every box that leaves our warehouse is tested for safety and packed with care.
+            </p>
             <div className="stat-row">
-              <div className="stat"><div className="n">35+</div><div className="l">Years Experience</div></div>
+              <div className="stat"><div className="n">15+</div><div className="l">Years Experience</div></div>
               <div className="stat"><div className="n">500+</div><div className="l">Cracker Varieties</div></div>
               <div className="stat"><div className="n">2 Lakh+</div><div className="l">Happy Customers</div></div>
               <div className="stat"><div className="n">100%</div><div className="l">Genuine Sivakasi</div></div>
@@ -233,7 +273,7 @@ export default async function HomePage() {
             <div className="ic">⚖️</div>
             <div>
               <h4>Licensed Trade</h4>
-              <p>We operate under Explosives License {settings.license} and GSTIN {settings.gstin}. Checkout is processed securely via Razorpay. Check local bursting rules before use.</p>
+              <p>We operate under Explosives License {settings.license} and GSTIN {settings.gstin}. Orders are placed online; payment is collected offline after confirmation. Check local bursting rules before use.</p>
             </div>
           </div>
         </div>

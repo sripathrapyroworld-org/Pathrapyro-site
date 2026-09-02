@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { revalidatePath, revalidateTag } from "next/cache";
-import { resetCustomerQuote } from "@/lib/cart-quote";
 import { prisma } from "@/lib/prisma";
+import { finalizeOrderPayment } from "@/lib/order-payment";
 import { razorpayConfigured, verifyRazorpaySignature } from "@/lib/razorpay";
 
+/** Legacy Razorpay verification — kept for any in-flight online payments. New orders use offline payment + admin confirmation. */
 export async function POST(req: Request) {
   const body = await req.json();
   const order = await prisma.order.findUnique({
@@ -16,7 +16,10 @@ export async function POST(req: Request) {
     if (razorpayConfigured()) {
       return NextResponse.json({ error: "Demo pay is disabled when Razorpay keys are set." }, { status: 400 });
     }
-    await markPaid(order.id, order.userId, order.items);
+    if (order.paymentStatus !== "paid") {
+      await prisma.order.update({ where: { id: order.id }, data: { paymentStatus: "paid" } });
+      await finalizeOrderPayment(order.id);
+    }
     return NextResponse.json({ orderNumber: order.orderNumber });
   }
 
@@ -35,37 +38,6 @@ export async function POST(req: Request) {
       razorpaySignature: razorpay_signature,
     },
   });
-  await markPaid(order.id, order.userId, order.items);
+  await finalizeOrderPayment(order.id);
   return NextResponse.json({ orderNumber: order.orderNumber });
-}
-
-async function markPaid(
-  orderId: string,
-  userId: string | null,
-  items: { kind: string; refId: string | null; qty: number }[]
-) {
-  await prisma.order.update({ where: { id: orderId }, data: { paymentStatus: "paid" } });
-  const shipment = await prisma.shipment.findUnique({ where: { orderId } });
-  if (shipment) {
-    await prisma.shipment.update({ where: { id: shipment.id }, data: { status: "confirmed" } });
-    await prisma.shipmentEvent.create({
-      data: { shipmentId: shipment.id, status: "confirmed", note: "Payment received" },
-    });
-  }
-  for (const item of items) {
-    if (item.kind === "product" && item.refId) {
-      await prisma.product.update({
-        where: { id: item.refId },
-        data: { stock: { decrement: item.qty } },
-      });
-    }
-  }
-  if (userId) {
-    await prisma.cartItem.deleteMany({ where: { userId } });
-    await resetCustomerQuote(userId);
-    revalidateTag("carts");
-    revalidatePath("/cart");
-    revalidatePath("/checkout");
-    revalidatePath("/admin/customers");
-  }
 }

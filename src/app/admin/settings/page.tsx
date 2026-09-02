@@ -36,8 +36,24 @@ export default async function SettingsPage() {
         <div className="field"><label>Address</label><textarea name="address" rows={2} defaultValue={s.address} /></div>
         <div className="field"><label>City line (footer)</label><input name="cityLine" defaultValue={s.cityLine} /></div>
         <div className="form-row two">
-          <div className="field"><label>Phone</label><input name="phone" defaultValue={s.phone} /></div>
-          <div className="field"><label>Phone 2</label><input name="phone2" defaultValue={s.phone2} /></div>
+          <div className="field">
+            <label>Customer care</label>
+            <input name="phone" defaultValue={s.phone} />
+          </div>
+          <div className="field">
+            <label>Ganesh Kumar — phone 1</label>
+            <input name="phone2" defaultValue={s.phone2} />
+          </div>
+        </div>
+        <div className="form-row two">
+          <div className="field">
+            <label>Ganesh Kumar — phone 2</label>
+            <input name="phone3" defaultValue={s.phone3} />
+          </div>
+          <div className="field">
+            <label>Muthuram P</label>
+            <input name="phone4" defaultValue={s.phone4} />
+          </div>
         </div>
         <div className="form-row two">
           <div className="field"><label>WhatsApp Number</label><input name="whatsapp" defaultValue={s.whatsapp} /></div>

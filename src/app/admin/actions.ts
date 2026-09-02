@@ -7,6 +7,7 @@ import { serializeComboItems, type ComboItemsData } from "@/lib/combo-items";
 import { prisma } from "@/lib/prisma";
 import { saveSettings, type SiteSettings, fromIstDatetimeLocal, DEFAULT_SETTINGS } from "@/lib/settings";
 import { cartQuoteKey, currentCustomerCartKey, resetCustomerQuote } from "@/lib/cart-quote";
+import { finalizeOrderPayment } from "@/lib/order-payment";
 import { removeUpload, saveUpload } from "@/lib/uploads";
 import { slugify } from "@/lib/utils";
 
@@ -145,6 +146,8 @@ export async function saveBusinessSettings(formData: FormData): Promise<ActionRe
       cityLine: String(formData.get("cityLine") || ""),
       phone: String(formData.get("phone") || ""),
       phone2: String(formData.get("phone2") || ""),
+      phone3: String(formData.get("phone3") || ""),
+      phone4: String(formData.get("phone4") || ""),
       whatsapp: String(formData.get("whatsapp") || ""),
       email: String(formData.get("email") || ""),
       hours: String(formData.get("hours") || ""),
@@ -179,7 +182,7 @@ export async function saveCustomerQuote(formData: FormData): Promise<ActionResul
     const quoteReady = formData.get("quoteReady") === "on";
     const cartKey = await currentCustomerCartKey(userId);
     if (quoteReady && !cartKey) {
-      return { ok: false, error: "Customer cart is empty. Cannot approve checkout without items." };
+      return { ok: false, error: "Customer cart is empty. Cannot approve order without items." };
     }
 
     await prisma.user.update({
@@ -197,7 +200,7 @@ export async function saveCustomerQuote(formData: FormData): Promise<ActionResul
     revalidatePath("/cart");
     revalidatePath("/checkout");
     revalidateTag("carts");
-    return { ok: true, message: quoteReady ? "Quote saved. Customer can checkout now." : "Charges saved." };
+    return { ok: true, message: quoteReady ? "Quote saved. Customer can place order now." : "Charges saved." };
   } catch (e) {
     return fail(e, "Could not save customer quote.");
   }
@@ -515,27 +518,19 @@ export async function updateOrderPayment(formData: FormData): Promise<ActionResu
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: { shipment: true },
+      include: { shipment: true, items: true },
     });
     if (!order) return { ok: false, error: "Order not found." };
+
+    const wasPaid = order.paymentStatus === "paid";
 
     await prisma.order.update({
       where: { id: orderId },
       data: { paymentStatus },
     });
 
-    if (paymentStatus === "paid" && order.shipment && order.shipment.status === "placed") {
-      await prisma.shipment.update({
-        where: { id: order.shipment.id },
-        data: { status: "confirmed", note: "Payment marked as paid by admin" },
-      });
-      await prisma.shipmentEvent.create({
-        data: {
-          shipmentId: order.shipment.id,
-          status: "confirmed",
-          note: "Payment received — marked paid by admin",
-        },
-      });
+    if (paymentStatus === "paid" && !wasPaid) {
+      await finalizeOrderPayment(orderId);
     }
 
     revalidatePath(`/admin/orders/${orderId}`);

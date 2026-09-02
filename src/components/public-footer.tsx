@@ -21,7 +21,8 @@ export function PublicFooter({
             </div>
           </div>
           <p style={{ color: "var(--cream-dim)", fontSize: "0.86rem", lineHeight: 1.7 }}>
-            Genuine Sivakasi crackers at direct factory rates. Licensed, tested, and trusted by families across Tamil Nadu.
+            Buy Sivakasi crackers online — retail &amp; wholesale fireworks with safe delivery across Tamil Nadu.
+            Genuine Sivakasi crackers at direct factory rates. Licensed, tested, and trusted by families statewide.
           </p>
           <div className="social-row">
             <a className="icon-btn" href="#" aria-label="Facebook">f</a>
@@ -51,7 +52,9 @@ export function PublicFooter({
           <h5>Contact</h5>
           <ul>
             <li>📍 {settings.cityLine}</li>
-            <li>📞 {settings.phone}</li>
+            <li>📞 Customer care: {settings.phone}</li>
+            <li>📞 Ganesh Kumar: {settings.phone2}{settings.phone3 ? ` · ${settings.phone3}` : ""}</li>
+            <li>📞 Muthuram P: {settings.phone4}</li>
             <li>✉️ {settings.email}</li>
             <li><Link href="/legal">Legal & Compliance Info</Link></li>
           </ul>
@@ -59,7 +62,7 @@ export function PublicFooter({
       </div>
       <div className="wrap footer-bottom">
         <span>© {new Date().getFullYear()} {settings.businessName}, Virudhunagar. All rights reserved.</span>
-        <span>Secure checkout via Razorpay · Licensed explosives dealer</span>
+        <span>License No. {settings.license} · Licensed explosives dealer</span>
       </div>
     </footer>
   );

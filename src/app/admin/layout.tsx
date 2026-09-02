@@ -1,8 +1,11 @@
 import { unstable_cache } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { privatePageMetadata } from "@/lib/seo";
 import { AdminLogout } from "@/components/admin-logout";
 import { AdminShell } from "@/components/admin-shell";
+
+export const metadata = privatePageMetadata;
 
 const getNewLeadCount = unstable_cache(
   async () => prisma.lead.count({ where: { status: "new" } }),

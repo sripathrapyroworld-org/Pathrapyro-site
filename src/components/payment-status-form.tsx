@@ -42,7 +42,7 @@ export function PaymentStatusForm({
         </button>
       </div>
       {current === "pending" && (
-        <p className="cell-sub">Mark as paid once cash / UPI / bank transfer is received.</p>
+        <p className="cell-sub">Mark as paid once UPI / bank transfer / cash payment is received — order will move to confirmed for processing.</p>
       )}
     </form>
   );

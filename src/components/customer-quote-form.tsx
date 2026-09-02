@@ -54,7 +54,7 @@ export function CustomerQuoteForm({
       </div>
       <label className="customer-quote-check">
         <input type="checkbox" name="quoteReady" defaultChecked={customer.quoteReady} />
-        <span>Allow customer to checkout (quote confirmed)</span>
+        <span>Allow customer to place order (quote confirmed)</span>
       </label>
       <p className="cell-sub customer-quote-preview">
         Quoted total for current cart: {formatInr(quotedTotal)} (incl. GST {gstPercent}%)

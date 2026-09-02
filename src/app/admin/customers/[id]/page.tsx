@@ -116,14 +116,14 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
 
       <section className="card panel static customer-section">
         <div className="customer-section-head">
-          <h3>Quote &amp; checkout</h3>
+          <h3>Quote &amp; order placement</h3>
           <span className={`pill ${quoteApplies ? "converted" : customer.quoteReady ? "contacted" : "new"}`}>
-            {quoteApplies ? "Checkout enabled" : customer.quoteReady ? "Cart changed — re-approve" : "Awaiting quote"}
+            {quoteApplies ? "Order enabled" : customer.quoteReady ? "Cart changed — re-approve" : "Awaiting quote"}
           </span>
         </div>
         <p className="cell-sub" style={{ marginBottom: 14 }}>
-          Set packing and shipping for this customer after reviewing their enquiry. Enable checkout when the quote is
-          confirmed.
+          Set packing and shipping for this customer after reviewing their enquiry. Enable order placement when the
+          quote is confirmed.
         </p>
         <CustomerQuoteForm
           customer={{

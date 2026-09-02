@@ -9,6 +9,8 @@ export type SiteSettings = {
   cityLine: string;
   phone: string;
   phone2: string;
+  phone3: string;
+  phone4: string;
   whatsapp: string;
   email: string;
   hours: string;
@@ -28,12 +30,14 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   businessName: "Sri Pathra Pyro World",
   tagline: "ALL KINDS OF CRACKERS & FANCY VARIETIES",
   gstin: "33AFRFS8857B1ZJ",
-  license: "TN/VIR/EXP/0857/2025",
+  license: "97/2025",
   address: "3/178C, Kalayarkurichi, Purnachandrapuram, Virudhunagar, Tamil Nadu – 626130",
   cityLine: "Kalayarkurichi, Purnachandrapuram – 626130",
-  phone: "+91 98432 11234",
-  phone2: "+91 89039 45671",
-  whatsapp: "+91 98432 11234",
+  phone: "+91 93443 32430",
+  phone2: "+91 97872 32430",
+  phone3: "+91 80720 05632",
+  phone4: "+91 99946 52096",
+  whatsapp: "+91 99946 52096",
   email: "sripathrapyroworld@gmail.com",
   hours: "Mon–Sat: 9:00 AM – 8:30 PM · Sun: 10:00 AM – 6:00 PM",
   mapEmbed:

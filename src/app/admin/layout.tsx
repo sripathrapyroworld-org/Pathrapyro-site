@@ -1,5 +1,4 @@
 import { unstable_cache } from "next/cache";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { privatePageMetadata } from "@/lib/seo";
 import { AdminLogout } from "@/components/admin-logout";
@@ -23,14 +22,13 @@ const getCartCustomerCount = unstable_cache(
 );
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const [session, leadCount, cartCustomerCount] = await Promise.all([
-    auth(),
+  const [leadCount, cartCustomerCount] = await Promise.all([
     getNewLeadCount(),
     getCartCustomerCount(),
   ]);
   return (
     <AdminShell
-      adminName={session?.user?.name || "Admin"}
+      adminName="Sri Pathra Pyro Admin"
       leadCount={leadCount}
       cartCustomerCount={cartCustomerCount}
       logout={<AdminLogout />}

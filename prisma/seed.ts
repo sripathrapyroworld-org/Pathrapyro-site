@@ -192,7 +192,7 @@ async function main() {
   const adminHash = await bcrypt.hash(process.env.ADMIN_PASSWORD || "Admin@123", 10);
   await prisma.user.create({
     data: {
-      name: process.env.ADMIN_NAME || "Selva Murugan",
+      name: process.env.ADMIN_NAME || "Sri Pathra Pyro Admin",
       email: (process.env.ADMIN_EMAIL || "admin@pathrapyro.local").toLowerCase(),
       phone: process.env.ADMIN_PHONE || "9843211234",
       passwordHash: adminHash,

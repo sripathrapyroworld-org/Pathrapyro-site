@@ -25,9 +25,49 @@ export function PublicFooter({
             Genuine Sivakasi crackers at direct factory rates. Licensed, tested, and trusted by families statewide.
           </p>
           <div className="social-row">
-            <a className="icon-btn" href="#" aria-label="Facebook">f</a>
-            <a className="icon-btn" href="#" aria-label="Instagram">in</a>
-            <WhatsAppCta className="icon-btn">wa</WhatsAppCta>
+            <a
+              className="icon-btn"
+              href="https://www.facebook.com/share/17sF7ezVJ1/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Facebook"
+              title="Facebook"
+            >
+              f
+            </a>
+            <a
+              className="icon-btn"
+              href="https://www.instagram.com/sripathrapyroworld"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+              title="Instagram"
+            >
+              ig
+            </a>
+            <a
+              className="icon-btn"
+              href="https://www.youtube.com/@sripathrapyroworld"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="YouTube"
+              title="YouTube"
+            >
+              yt
+            </a>
+            <a
+              className="icon-btn"
+              href="https://www.threads.com/@sripathrapyroworld"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Threads"
+              title="Threads"
+            >
+              th
+            </a>
+            <WhatsAppCta className="icon-btn" aria-label="WhatsApp" title="WhatsApp">
+              wa
+            </WhatsAppCta>
           </div>
         </div>
         <div>

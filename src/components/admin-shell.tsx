@@ -76,7 +76,7 @@ export function AdminShell({
               </div>
             </div>
             <div className="admin-chip">
-              <div className="av">{adminName.slice(0, 2).toUpperCase()}</div>
+              <div className="av">SP</div>
               <div>
                 <div className="nm">{adminName}</div>
                 <div className="rl">Store Admin</div>

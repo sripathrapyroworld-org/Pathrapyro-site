@@ -21,6 +21,7 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
   const router = useRouter();
   const { confirm, dialog } = useConfirm();
   const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState<Cat | null>(null);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const [pending, startTransition] = useTransition();
@@ -35,7 +36,14 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
     window.setTimeout(() => setToast(""), 2500);
   }
 
-  function onCreate(e: FormEvent<HTMLFormElement>) {
+  function closeModal() {
+    if (pending) return;
+    setCreating(false);
+    setEditing(null);
+    setError("");
+  }
+
+  function onSave(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     const fd = new FormData(e.currentTarget);
@@ -46,7 +54,8 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
         return;
       }
       setCreating(false);
-      flash(res.message || "Category created.");
+      setEditing(null);
+      flash(res.message || (editing ? "Category updated." : "Category created."));
       router.refresh();
     });
   }
@@ -69,13 +78,23 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
     });
   }
 
+  const modalOpen = creating || Boolean(editing);
+
   return (
     <>
       {dialog}
       {toast && <div className="toast-banner ok">{toast}</div>}
       <div className="toolbar">
         <p className="page-sub">Choose a category to manage its products, or create a new one.</p>
-        <button className="btn btn-primary" type="button" onClick={() => setCreating(true)}>
+        <button
+          className="btn btn-primary"
+          type="button"
+          onClick={() => {
+            setEditing(null);
+            setError("");
+            setCreating(true);
+          }}
+        >
           + New Category
         </button>
       </div>
@@ -97,6 +116,21 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
                 <button
                   type="button"
                   className="icon-mini"
+                  title="Edit category"
+                  disabled={pending}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setCreating(false);
+                    setError("");
+                    setEditing(c);
+                  }}
+                >
+                  ✎
+                </button>
+                <button
+                  type="button"
+                  className="icon-mini"
                   title="Delete category"
                   disabled={pending}
                   onClick={(e) => {
@@ -113,35 +147,69 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
         ))}
       </div>
 
-      {creating && (
-        <div className="modal-overlay show" onClick={() => !pending && setCreating(false)}>
-          <form className="card form-card static modal-panel" onSubmit={onCreate} onClick={(e) => e.stopPropagation()}>
-            <h3>New Category</h3>
+      {modalOpen && (
+        <div className="modal-overlay show" onClick={closeModal}>
+          <form className="card form-card static modal-panel" onSubmit={onSave} onClick={(e) => e.stopPropagation()}>
+            <h3>{editing ? "Edit Category" : "New Category"}</h3>
             {error && <div className="alert error">{error}</div>}
+            {editing && <input type="hidden" name="id" value={editing.id} />}
             <div className="form-stack">
               <div className="field">
                 <label htmlFor="cat-name">Name</label>
-                <input id="cat-name" name="name" required placeholder="e.g. Sparklers" />
+                <input
+                  id="cat-name"
+                  name="name"
+                  required
+                  defaultValue={editing?.name || ""}
+                  placeholder="e.g. Sparklers"
+                />
               </div>
               <div className="field">
                 <label htmlFor="cat-emoji">Emoji</label>
-                <input id="cat-emoji" name="emoji" defaultValue="🎆" maxLength={8} />
+                <input
+                  id="cat-emoji"
+                  name="emoji"
+                  defaultValue={editing?.emoji || "🎆"}
+                  maxLength={8}
+                />
               </div>
               <div className="field">
                 <label htmlFor="cat-desc">Description</label>
-                <textarea id="cat-desc" name="description" rows={3} placeholder="Short category description" />
+                <textarea
+                  id="cat-desc"
+                  name="description"
+                  rows={3}
+                  defaultValue={editing?.description || ""}
+                  placeholder="Short category description"
+                />
               </div>
               <div className="field">
-                <label htmlFor="cat-cover">Cover image (optional)</label>
+                <label htmlFor="cat-cover">Cover image {editing ? "(optional — leave empty to keep current)" : "(optional)"}</label>
                 <input id="cat-cover" type="file" name="cover" accept="image/*" />
+                {editing?.coverPath && (
+                  <p className="cell-sub" style={{ marginTop: 8 }}>
+                    Current cover:{" "}
+                    <img
+                      src={mediaUrl(editing.coverPath)}
+                      alt=""
+                      style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 8, verticalAlign: "middle" }}
+                    />
+                  </p>
+                )}
               </div>
             </div>
             <div className="modal-actions">
-              <button type="button" className="btn btn-outline" disabled={pending} onClick={() => setCreating(false)}>
+              <button type="button" className="btn btn-outline" disabled={pending} onClick={closeModal}>
                 Cancel
               </button>
               <button className="btn btn-primary" disabled={pending}>
-                {pending ? <InlineSpinner label="Creating…" /> : "Create Category"}
+                {pending ? (
+                  <InlineSpinner label={editing ? "Saving…" : "Creating…"} />
+                ) : editing ? (
+                  "Save Changes"
+                ) : (
+                  "Create Category"
+                )}
               </button>
             </div>
           </form>

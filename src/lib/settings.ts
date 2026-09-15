@@ -24,6 +24,10 @@ export type SiteSettings = {
   countdownEndsAt: string;
   countdownNote: string;
   countdownButtonLabel: string;
+  discountBadgeEnabled: boolean;
+  discountBadgePercent: string;
+  discountBadgeLine1: string;
+  discountBadgeLine2: string;
 };
 
 export const DEFAULT_SETTINGS: SiteSettings = {
@@ -51,6 +55,10 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   countdownEndsAt: "2026-11-08T18:30:00.000Z",
   countdownNote: "",
   countdownButtonLabel: "Place Quick Order →",
+  discountBadgeEnabled: true,
+  discountBadgePercent: "40–90%",
+  discountBadgeLine1: "Flat discount on MRP",
+  discountBadgeLine2: "across all categories",
 };
 
 export async function getSettings(): Promise<SiteSettings> {
@@ -69,6 +77,10 @@ export async function getSettings(): Promise<SiteSettings> {
       countdownEndsAt: String(parsed.countdownEndsAt ?? DEFAULT_SETTINGS.countdownEndsAt),
       countdownNote: String(parsed.countdownNote ?? DEFAULT_SETTINGS.countdownNote),
       countdownButtonLabel: String(parsed.countdownButtonLabel ?? DEFAULT_SETTINGS.countdownButtonLabel),
+      discountBadgeEnabled: parsed.discountBadgeEnabled !== false,
+      discountBadgePercent: String(parsed.discountBadgePercent ?? DEFAULT_SETTINGS.discountBadgePercent),
+      discountBadgeLine1: String(parsed.discountBadgeLine1 ?? DEFAULT_SETTINGS.discountBadgeLine1),
+      discountBadgeLine2: String(parsed.discountBadgeLine2 ?? DEFAULT_SETTINGS.discountBadgeLine2),
     };
   } catch {
     return DEFAULT_SETTINGS;

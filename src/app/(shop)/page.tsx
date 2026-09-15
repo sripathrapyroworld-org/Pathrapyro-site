@@ -93,14 +93,20 @@ export default async function HomePage() {
                 🟢 WhatsApp Enquiry
               </WhatsAppCta>
             </div>
-            <div className="discount-pill">
-              <div className="num">40–90%</div>
-              <div className="txt">
-                Flat discount on MRP
-                <br />
-                across all categories
+            {settings.discountBadgeEnabled && (
+              <div className="discount-pill">
+                <div className="num">{settings.discountBadgePercent}</div>
+                <div className="txt">
+                  {settings.discountBadgeLine1}
+                  {settings.discountBadgeLine2 ? (
+                    <>
+                      <br />
+                      {settings.discountBadgeLine2}
+                    </>
+                  ) : null}
+                </div>
               </div>
-            </div>
+            )}
           </div>
           {settings.countdownEnabled && (
             <div className="countdown-card">

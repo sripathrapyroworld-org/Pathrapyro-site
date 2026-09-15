@@ -64,6 +64,29 @@ export default async function SettingsPage() {
         <div className="field"><label>Top bar marquee</label><textarea name="marquee" rows={2} defaultValue={s.marquee} /></div>
       </div>
 
+      <h3 style={{ margin: "28px 0 8px" }}>Homepage discount badge</h3>
+      <p className="cell-sub" style={{ marginBottom: 16 }}>
+        Controls the gold discount pill on the homepage hero (e.g. 40–90% off).
+      </p>
+      <label className="customer-quote-check" style={{ marginBottom: 14 }}>
+        <input type="checkbox" name="discountBadgeEnabled" defaultChecked={s.discountBadgeEnabled} />
+        <span>Show discount badge on homepage</span>
+      </label>
+      <div className="form-row">
+        <div className="field">
+          <label>Percent text</label>
+          <input name="discountBadgePercent" defaultValue={s.discountBadgePercent} placeholder="40–90%" />
+        </div>
+        <div className="field">
+          <label>Line 1</label>
+          <input name="discountBadgeLine1" defaultValue={s.discountBadgeLine1} placeholder="Flat discount on MRP" />
+        </div>
+        <div className="field">
+          <label>Line 2 (optional)</label>
+          <input name="discountBadgeLine2" defaultValue={s.discountBadgeLine2} placeholder="across all categories" />
+        </div>
+      </div>
+
       <h3 style={{ margin: "28px 0 8px" }}>Homepage offer banner</h3>
       <p className="cell-sub" style={{ marginBottom: 16 }}>
         Controls the countdown card on the home page hero. Date and time are in Indian Standard Time.

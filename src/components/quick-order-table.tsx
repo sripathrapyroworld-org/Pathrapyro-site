@@ -108,6 +108,17 @@ export function QuickOrderTable({
         </div>
       </div>
       <section className={`qo-section${summary.count > 0 ? " has-summary" : ""}`}>
+        {summary.count > 0 && (
+          <div className="qo-mobile-summary">
+            <div>
+              <strong>{summary.count} items</strong>
+              <span>{formatInr(summary.total)}</span>
+            </div>
+            <button type="button" className="btn btn-primary" onClick={pushToCart}>
+              Order Now
+            </button>
+          </div>
+        )}
         <div className="wrap">
           <div className="qo-toolbar">
             <div className="search-box qo-search">
@@ -236,18 +247,6 @@ export function QuickOrderTable({
           </div>
         </div>
       </section>
-
-      {summary.count > 0 && (
-        <div className="qo-mobile-summary">
-          <div>
-            <strong>{summary.count} items</strong>
-            <span>{formatInr(summary.total)}</span>
-          </div>
-          <button type="button" className="btn btn-primary" onClick={pushToCart}>
-            Order Now
-          </button>
-        </div>
-      )}
 
       {filterOpen && (
         <div className="qo-filter-overlay" onClick={() => setFilterOpen(false)}>

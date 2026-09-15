@@ -83,11 +83,11 @@ export function PublicHeader({
       </header>
       <div className="strip">
         <div className="track">
-          <span>🎆 DIWALI MEGA SALE — FLAT 40% TO 90% OFF</span>
+          <span>🎆 DIWALI MEGA SALE — FLAT {settings.discountBadgePercent} OFF</span>
           <span>🚚 SAFE PARCEL DELIVERY ALL OVER TAMIL NADU</span>
           <span>🏭 100% GENUINE SIVAKASI FACTORY PRODUCTS</span>
           <span>📜 LICENSED DEALER · GOVT APPROVED</span>
-          <span>🎆 DIWALI MEGA SALE — FLAT 40% TO 90% OFF</span>
+          <span>🎆 DIWALI MEGA SALE — FLAT {settings.discountBadgePercent} OFF</span>
           <span>🚚 SAFE PARCEL DELIVERY ALL OVER TAMIL NADU</span>
           <span>🏭 100% GENUINE SIVAKASI FACTORY PRODUCTS</span>
           <span>📜 LICENSED DEALER · GOVT APPROVED</span>

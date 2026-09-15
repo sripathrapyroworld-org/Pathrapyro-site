@@ -161,6 +161,12 @@ export async function saveBusinessSettings(formData: FormData): Promise<ActionRe
       countdownEndsAt: fromIstDatetimeLocal(String(formData.get("countdownEndsAt") || "")),
       countdownNote: String(formData.get("countdownNote") || "").trim(),
       countdownButtonLabel: String(formData.get("countdownButtonLabel") || "").trim() || DEFAULT_SETTINGS.countdownButtonLabel,
+      discountBadgeEnabled: formData.get("discountBadgeEnabled") === "on",
+      discountBadgePercent:
+        String(formData.get("discountBadgePercent") || "").trim() || DEFAULT_SETTINGS.discountBadgePercent,
+      discountBadgeLine1:
+        String(formData.get("discountBadgeLine1") || "").trim() || DEFAULT_SETTINGS.discountBadgeLine1,
+      discountBadgeLine2: String(formData.get("discountBadgeLine2") || "").trim(),
     };
     await saveSettings(data);
   revalidatePath("/admin/settings");

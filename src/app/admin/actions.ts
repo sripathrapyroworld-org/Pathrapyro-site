@@ -300,6 +300,86 @@ export async function saveSubCategory(formData: FormData): Promise<ActionResult>
   }
 }
 
+export async function reorderCategories(orderedIds: string[]): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    const ids = orderedIds.filter(Boolean);
+    await prisma.$transaction(
+      ids.map((id, index) =>
+        prisma.category.update({ where: { id }, data: { sortOrder: index } })
+      )
+    );
+    revalidatePath("/admin/products");
+    revalidatePath("/shop");
+    revalidatePath("/");
+    revalidateTag("categories");
+    return { ok: true, message: "Category order saved." };
+  } catch (e) {
+    return fail(e, "Could not reorder categories.");
+  }
+}
+
+export async function reorderSubCategories(
+  categoryId: string,
+  orderedIds: string[]
+): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    if (!categoryId) return { ok: false, error: "Category is required." };
+    const ids = orderedIds.filter(Boolean);
+    await prisma.$transaction(
+      ids.map((id, index) =>
+        prisma.subCategory.update({ where: { id }, data: { sortOrder: index } })
+      )
+    );
+    revalidatePath("/admin/products");
+    revalidatePath(`/admin/products/category/${categoryId}`);
+    revalidatePath("/shop");
+    revalidateTag("categories");
+    return { ok: true, message: "Subcategory order saved." };
+  } catch (e) {
+    return fail(e, "Could not reorder subcategories.");
+  }
+}
+
+export async function reorderCategoryProducts(
+  categoryId: string,
+  groups: { subCategoryId: string | null; productIds: string[] }[]
+): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    if (!categoryId) return { ok: false, error: "Category is required." };
+    const ops: ReturnType<typeof prisma.product.updateMany>[] = [];
+    for (const group of groups) {
+      const subId = group.subCategoryId || null;
+      if (subId) {
+        const sub = await prisma.subCategory.findFirst({
+          where: { id: subId, categoryId },
+          select: { id: true },
+        });
+        if (!sub) return { ok: false, error: "Invalid subcategory for this category." };
+      }
+      for (let index = 0; index < group.productIds.length; index++) {
+        const productId = group.productIds[index];
+        ops.push(
+          prisma.product.updateMany({
+            where: { id: productId, categoryId },
+            data: { subCategoryId: subId, sortOrder: index },
+          })
+        );
+      }
+    }
+    await prisma.$transaction(ops);
+    revalidatePath("/admin/products");
+    revalidatePath(`/admin/products/category/${categoryId}`);
+    revalidatePath("/shop");
+    revalidatePath("/quick-order");
+    return { ok: true, message: "Product order saved." };
+  } catch (e) {
+    return fail(e, "Could not reorder products.");
+  }
+}
+
 export async function deleteSubCategory(id: string): Promise<ActionResult> {
   try {
     await requireAdmin();

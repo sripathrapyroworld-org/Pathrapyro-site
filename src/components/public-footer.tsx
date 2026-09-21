@@ -74,7 +74,7 @@ export function PublicFooter({
           <h5>Quick Links</h5>
           <ul>
             <li><Link href="/shop">Shop All</Link></li>
-            <li><Link href="/quick-order">Quick Order</Link></li>
+            <li><Link href="/shop">Shop / Quick Order</Link></li>
             <li><Link href="/combos">Combo Packs</Link></li>
             <li><Link href="/about">About Us</Link></li>
             <li><Link href="/track">Track Order</Link></li>

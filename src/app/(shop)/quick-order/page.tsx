@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { QuickOrderTable } from "@/components/quick-order-table";
+import { ShopCatalog } from "@/components/shop-catalog";
 import { breadcrumbSchema, SeoJsonLd } from "@/components/seo-json-ld";
 import { fetchPricedProducts, toPricedCard } from "@/lib/catalog";
 import { prisma } from "@/lib/prisma";
@@ -14,14 +13,17 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default async function QuickOrderPage() {
-  const [products, cats] = await Promise.all([
+  const [products, categories] = await Promise.all([
     fetchPricedProducts(),
     prisma.category.findMany({
       where: { slug: { not: "combo-packs" } },
       orderBy: { sortOrder: "asc" },
-      select: { name: true },
+      include: {
+        subCategories: { orderBy: { sortOrder: "asc" }, select: { id: true, name: true, sortOrder: true } },
+      },
     }),
   ]);
+
   return (
     <>
       <SeoJsonLd
@@ -30,19 +32,20 @@ export default async function QuickOrderPage() {
           { name: "Quick Order", path: absoluteUrl("/quick-order") },
         ])}
       />
-      <div className="page-hero" style={{ paddingBottom: 12 }}>
-        <div className="wrap">
-          <div className="shop-pricelist-row" style={{ marginTop: 0 }}>
-            <a className="btn btn-outline" href="/api/pricelist">
-              Download Price List PDF
-            </a>
-            <Link className="btn btn-outline" href="/shop">
-              Browse shop by category →
-            </Link>
-          </div>
-        </div>
-      </div>
-      <QuickOrderTable products={products.map(toPricedCard)} categories={cats.map((c) => c.name)} />
+      <ShopCatalog
+        products={products.map(toPricedCard)}
+        categories={categories.map((c) => ({
+          id: c.id,
+          name: c.name,
+          slug: c.slug,
+          emoji: c.emoji,
+          sortOrder: c.sortOrder,
+          subCategories: c.subCategories,
+        }))}
+        eyebrow="Fast Checkout"
+        title="Quick Order — Shop All Products"
+        description="Same categorized shop list with live totals. Set quantities and submit your whole order in minutes."
+      />
     </>
   );
 }

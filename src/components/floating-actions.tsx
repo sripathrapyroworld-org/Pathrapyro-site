@@ -4,18 +4,13 @@ import Link from "next/link";
 import { useCart } from "./cart-provider";
 import { WhatsAppCta } from "@/components/whatsapp-cta";
 
-export function FloatingActions({ phone, license }: { phone: string; whatsapp?: string; license?: string }) {
+export function FloatingActions({ phone }: { phone: string; whatsapp?: string; license?: string }) {
   const { count } = useCart();
   return (
     <>
-      <Link href="/quick-order" className="quick-order-fab">
+      <Link href="/shop" className="quick-order-fab">
         ⚡ QUICK ORDER
       </Link>
-      {license && (
-        <div className="license-fab" aria-label={`License No. ${license}`}>
-          License No: {license}
-        </div>
-      )}
       <div className="float-btns">
         <Link href="/cart" className="fab cart-fab desktop-only-fab" aria-label="Cart">
           🛒

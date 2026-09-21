@@ -69,7 +69,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
         />
         {children}
         <PublicFooter settings={settings} categories={categories} />
-        <FloatingActions phone={settings.phone} whatsapp={settings.whatsapp} license={settings.license} />
+        <FloatingActions phone={settings.phone} whatsapp={settings.whatsapp} />
         <Toast />
       </CartProvider>
     </AuthSession>

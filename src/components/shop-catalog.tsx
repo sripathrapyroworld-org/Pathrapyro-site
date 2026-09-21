@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCart } from "@/components/cart-provider";
-import { formatInr, mediaUrl } from "@/lib/utils";
+import { TotalsBreakdown } from "@/components/totals-breakdown";
+import { cartTotals, formatInr, mediaUrl } from "@/lib/utils";
 import type { ProductCardData } from "@/components/product-card";
 
 export type ShopCatalogProduct = ProductCardData & {
@@ -25,14 +26,21 @@ export type ShopCatalogCategory = {
 export function ShopCatalog({
   products,
   categories,
+  title = "Shop — Order by Category",
+  eyebrow = "Full Catalogue",
+  description = "Browse by category and subcategory, set quantities, review the running total, and place your order in one go.",
 }: {
   products: ShopCatalogProduct[];
   categories: ShopCatalogCategory[];
+  title?: string;
+  eyebrow?: string;
+  description?: string;
 }) {
-  const { add, requireLogin } = useCart();
+  const { add, showToast, gstPercent, requireLogin } = useCart();
   const [q, setQ] = useState("");
   const [qty, setQty] = useState<Record<string, number>>({});
   const [openCat, setOpenCat] = useState<string>("all");
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -74,28 +82,77 @@ export function ShopCatalog({
 
   const visible = openCat === "all" ? sections : sections.filter((s) => s.cat.id === openCat);
 
-  function setLineQty(id: string, next: number) {
-    setQty((prev) => ({ ...prev, [id]: Math.max(0, next) }));
-  }
-
-  function addLine(p: ShopCatalogProduct) {
-    if (!requireLogin()) return;
-    const n = qty[p.id] || 1;
-    if (n < 1) return;
-    add(
-      {
-        key: `product:${p.id}`,
-        kind: "product",
+  const summary = useMemo(() => {
+    const lines = products
+      .filter((p) => (qty[p.id] || 0) > 0)
+      .map((p) => ({
+        key: p.id,
+        kind: "product" as const,
         id: p.id,
         name: p.name,
         cat: p.cat,
         mrp: p.mrp,
         sale: p.sale,
         img: p.img,
-      },
-      n
-    );
+        qty: qty[p.id] || 0,
+      }));
+    return cartTotals(lines, { gstPercent, feesPending: true });
+  }, [products, qty, gstPercent]);
+
+  useEffect(() => {
+    if (!filterOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setFilterOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [filterOpen]);
+
+  function setLineQty(id: string, next: number) {
+    setQty((prev) => ({ ...prev, [id]: Math.max(0, next) }));
   }
+
+  function bump(id: string, delta: number) {
+    setLineQty(id, (qty[id] || 0) + delta);
+  }
+
+  function pushToCart() {
+    if (!requireLogin()) return;
+    let any = false;
+    for (const p of products) {
+      const n = qty[p.id] || 0;
+      if (n <= 0) continue;
+      add(
+        {
+          key: `product:${p.id}`,
+          kind: "product",
+          id: p.id,
+          name: p.name,
+          cat: p.cat,
+          mrp: p.mrp,
+          sale: p.sale,
+          img: p.img,
+          slug: p.slug,
+        },
+        n
+      );
+      any = true;
+    }
+    if (any) {
+      setQty({});
+      window.location.href = "/cart";
+    } else {
+      showToast("⚠️ Please add quantity to at least one item");
+    }
+  }
+
+  function pickCategory(next: string) {
+    setOpenCat(next);
+    setFilterOpen(false);
+  }
+
+  const activeCatLabel =
+    openCat === "all" ? "All" : categories.find((c) => c.id === openCat)?.name || "Filter";
 
   return (
     <>
@@ -104,33 +161,46 @@ export function ShopCatalog({
           <div className="crumb">
             Home / <span>Shop</span>
           </div>
-          <div className="eyebrow">Full Catalogue</div>
-          <h1>Sivakasi Crackers Online — Shop All Fireworks</h1>
-          <p>
-            Browse by category and subcategory, set quantities, and add to cart — the same fast flow as Quick Order.
-          </p>
+          <div className="eyebrow">{eyebrow}</div>
+          <h1>{title}</h1>
+          <p>{description}</p>
           <div className="shop-pricelist-row">
-            <a className="btn btn-outline" href="/api/pricelist">
+            <a className="btn btn-outline shop-pricelist-mobile" href="/api/pricelist">
               Download Price List PDF
             </a>
-            <Link className="btn btn-primary" href="/quick-order">
-              Open Quick Order →
-            </Link>
           </div>
         </div>
       </div>
 
-      <section className="qo-section">
+      <section className={`qo-section${summary.count > 0 ? " has-summary" : ""}`}>
+        {summary.count > 0 && (
+          <div className="qo-mobile-summary">
+            <div>
+              <strong>{summary.count} items</strong>
+              <span>{formatInr(summary.total)}</span>
+            </div>
+            <button type="button" className="btn btn-primary" onClick={pushToCart}>
+              Order Now
+            </button>
+          </div>
+        )}
         <div className="wrap">
           <div className="qo-toolbar">
             <div className="search-box qo-search">
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Search products..."
+                placeholder="Search all products..."
               />
             </div>
-            <div className="qo-cats">
+            <button
+              type="button"
+              className={`btn btn-outline qo-filter-btn${openCat !== "all" ? " active" : ""}`}
+              onClick={() => setFilterOpen(true)}
+            >
+              Filter{openCat !== "all" ? `: ${activeCatLabel}` : ""}
+            </button>
+            <div className="qo-cats desktop-cats">
               <button
                 type="button"
                 className={`chip${openCat === "all" ? " active" : ""}`}
@@ -151,45 +221,87 @@ export function ShopCatalog({
             </div>
           </div>
 
-          <div className="shop-catalog">
-            {visible.map(({ cat, subs, ungrouped }) => (
-              <div className="shop-cat-block" key={cat.id} id={`cat-${cat.slug}`}>
-                <div className="shop-cat-head">
-                  <h2>
-                    {cat.emoji} {cat.name}
-                  </h2>
+          {openCat !== "all" && (
+            <div className="qo-active-filter">
+              <span>Showing: {activeCatLabel}</span>
+              <button type="button" onClick={() => setOpenCat("all")}>
+                Clear
+              </button>
+            </div>
+          )}
+
+          <div className="qo-layout">
+            <div className="shop-catalog">
+              {visible.map(({ cat, subs, ungrouped }) => (
+                <div className="shop-cat-block card static" key={cat.id} id={`cat-${cat.slug}`}>
+                  <div className="shop-cat-head">
+                    <h2>
+                      {cat.emoji} {cat.name}
+                    </h2>
+                  </div>
+
+                  {subs.map((sub) => (
+                    <div className="shop-sub-block" key={sub.id}>
+                      <h3>{sub.name}</h3>
+                      <ProductTable products={sub.products} qty={qty} bump={bump} setLineQty={setLineQty} />
+                    </div>
+                  ))}
+
+                  {ungrouped.length > 0 && (
+                    <div className="shop-sub-block">
+                      {subs.length > 0 && <h3>Other items</h3>}
+                      <ProductTable products={ungrouped} qty={qty} bump={bump} setLineQty={setLineQty} />
+                    </div>
+                  )}
                 </div>
+              ))}
 
-                {subs.map((sub) => (
-                  <div className="shop-sub-block" key={sub.id}>
-                    <h3>{sub.name}</h3>
-                    <ProductTable
-                      products={sub.products}
-                      qty={qty}
-                      setLineQty={setLineQty}
-                      addLine={addLine}
-                    />
-                  </div>
-                ))}
+              {!visible.length && <p className="qo-empty">No products match your search.</p>}
+            </div>
 
-                {ungrouped.length > 0 && (
-                  <div className="shop-sub-block">
-                    {subs.length > 0 && <h3>Other items</h3>}
-                    <ProductTable
-                      products={ungrouped}
-                      qty={qty}
-                      setLineQty={setLineQty}
-                      addLine={addLine}
-                    />
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {!visible.length && <p className="qo-empty">No products match your search.</p>}
+            <aside className="card summary-card qo-summary-desktop">
+              <h4>Order Summary</h4>
+              <TotalsBreakdown totals={summary} savingsLabel="Est. Discount Applied" />
+              <button type="button" className="btn btn-primary btn-block" style={{ marginTop: 18 }} onClick={pushToCart}>
+                Order Now → Go to Cart
+              </button>
+              <a className="btn btn-outline btn-block" style={{ marginTop: 10 }} href="/api/pricelist">
+                Download Price List
+              </a>
+            </aside>
           </div>
         </div>
       </section>
+
+      {filterOpen && (
+        <div className="qo-filter-overlay" onClick={() => setFilterOpen(false)}>
+          <div className="qo-filter-sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Filter products">
+            <div className="qo-filter-head">
+              <h3>Filter by category</h3>
+              <button type="button" className="icon-mini" onClick={() => setFilterOpen(false)} aria-label="Close">
+                ✕
+              </button>
+            </div>
+            <div className="qo-filter-options">
+              <button type="button" className={openCat === "all" ? "active" : ""} onClick={() => pickCategory("all")}>
+                All
+                {openCat === "all" && <span>✓</span>}
+              </button>
+              {categories.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={openCat === c.id ? "active" : ""}
+                  onClick={() => pickCategory(c.id)}
+                >
+                  {c.emoji} {c.name}
+                  {openCat === c.id && <span>✓</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -197,13 +309,13 @@ export function ShopCatalog({
 function ProductTable({
   products,
   qty,
+  bump,
   setLineQty,
-  addLine,
 }: {
   products: ShopCatalogProduct[];
   qty: Record<string, number>;
+  bump: (id: string, delta: number) => void;
   setLineQty: (id: string, next: number) => void;
-  addLine: (p: ShopCatalogProduct) => void;
 }) {
   return (
     <>
@@ -212,7 +324,9 @@ function ProductTable({
           const n = qty[p.id] || 0;
           return (
             <article className={`qo-item${n > 0 ? " selected" : ""}`} key={p.id}>
-              <img src={mediaUrl(p.img)} alt="" />
+              <Link href={`/product/${p.slug}`}>
+                <img src={mediaUrl(p.img)} alt="" />
+              </Link>
               <div className="qo-item-body">
                 <h4>
                   <Link href={`/product/${p.slug}`}>{p.name}</Link>
@@ -223,7 +337,7 @@ function ProductTable({
                   </span>
                 </div>
                 <div className="qo-qty">
-                  <button type="button" onClick={() => setLineQty(p.id, n - 1)} disabled={n <= 0}>
+                  <button type="button" aria-label="Decrease" onClick={() => bump(p.id, -1)} disabled={n <= 0}>
                     −
                   </button>
                   <input
@@ -232,13 +346,11 @@ function ProductTable({
                     value={n}
                     onChange={(e) => setLineQty(p.id, Number(e.target.value) || 0)}
                   />
-                  <button type="button" onClick={() => setLineQty(p.id, n + 1)}>
+                  <button type="button" aria-label="Increase" onClick={() => bump(p.id, 1)}>
                     +
                   </button>
-                  <button type="button" className="btn btn-sm btn-primary" onClick={() => addLine(p)}>
-                    Add
-                  </button>
                 </div>
+                {n > 0 && <div className="qo-item-sub">Line total {formatInr(n * p.sale)}</div>}
               </div>
             </article>
           );
@@ -253,7 +365,7 @@ function ProductTable({
               <th>MRP</th>
               <th>Price</th>
               <th>Qty</th>
-              <th></th>
+              <th>Subtotal</th>
             </tr>
           </thead>
           <tbody>
@@ -263,7 +375,9 @@ function ProductTable({
                 <tr key={p.id}>
                   <td>
                     <div className="qo-row-name">
-                      <img src={mediaUrl(p.img)} alt="" />
+                      <Link href={`/product/${p.slug}`}>
+                        <img src={mediaUrl(p.img)} alt="" />
+                      </Link>
                       <Link href={`/product/${p.slug}`}>{p.name}</Link>
                     </div>
                   </td>
@@ -271,7 +385,7 @@ function ProductTable({
                   <td className="price-cell">{formatInr(p.sale)}</td>
                   <td>
                     <div className="qo-qty compact">
-                      <button type="button" onClick={() => setLineQty(p.id, n - 1)} disabled={n <= 0}>
+                      <button type="button" aria-label="Decrease" onClick={() => bump(p.id, -1)} disabled={n <= 0}>
                         −
                       </button>
                       <input
@@ -280,16 +394,12 @@ function ProductTable({
                         value={n}
                         onChange={(e) => setLineQty(p.id, Number(e.target.value) || 0)}
                       />
-                      <button type="button" onClick={() => setLineQty(p.id, n + 1)}>
+                      <button type="button" aria-label="Increase" onClick={() => bump(p.id, 1)}>
                         +
                       </button>
                     </div>
                   </td>
-                  <td>
-                    <button type="button" className="btn btn-sm btn-primary" onClick={() => addLine(p)}>
-                      Add
-                    </button>
-                  </td>
+                  <td className="price-cell">{formatInr(n * p.sale)}</td>
                 </tr>
               );
             })}

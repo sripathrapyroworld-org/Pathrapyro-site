@@ -123,7 +123,7 @@ export function ShopBrowser({
               </div>
             )}
             <p className="center mt-40">
-              <Link href="/quick-order" className="btn btn-outline">Prefer a spreadsheet? Use Quick Order →</Link>
+              <Link href="/shop" className="btn btn-outline">Prefer a spreadsheet? Use Shop / Quick Order →</Link>
             </p>
           </div>
         </div>

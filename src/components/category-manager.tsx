@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useMemo, useState, useTransition } from "react";
+import { FormEvent, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { deleteCategory, saveCategory } from "@/app/admin/actions";
+import { deleteCategory, reorderCategories, saveCategory } from "@/app/admin/actions";
 import { useConfirm } from "@/components/confirm-dialog";
 import { InlineSpinner } from "@/components/page-loader";
 import { mediaUrl } from "@/lib/utils";
@@ -26,11 +26,15 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const [pending, startTransition] = useTransition();
+  const [items, setItems] = useState(categories);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
 
-  const sorted = useMemo(
-    () => [...categories].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)),
-    [categories]
-  );
+  useEffect(() => {
+    setItems([...categories].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)));
+  }, [categories]);
+
+  const sorted = useMemo(() => items, [items]);
 
   function flash(msg: string) {
     setToast(msg);
@@ -79,6 +83,28 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
     });
   }
 
+  function onDrop(targetId: string) {
+    if (!dragId || dragId === targetId) {
+      setDragId(null);
+      setOverId(null);
+      return;
+    }
+    const from = items.findIndex((c) => c.id === dragId);
+    const to = items.findIndex((c) => c.id === targetId);
+    if (from < 0 || to < 0) return;
+    const next = [...items];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setItems(next);
+    setDragId(null);
+    setOverId(null);
+    startTransition(async () => {
+      const res = await reorderCategories(next.map((c) => c.id));
+      flash(res.ok ? res.message || "Order saved." : res.error);
+      router.refresh();
+    });
+  }
+
   const modalOpen = creating || Boolean(editing);
 
   return (
@@ -86,7 +112,10 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
       {dialog}
       {toast && <div className="toast-banner ok">{toast}</div>}
       <div className="toolbar">
-        <p className="page-sub">Choose a category to manage its products, or create a new one.</p>
+        <div>
+          <p className="page-sub">Drag category cards to set the shop display order.</p>
+          <p className="dnd-hint">Hold a card and drop it in the position you want.</p>
+        </div>
         <button
           className="btn btn-primary"
           type="button"
@@ -101,19 +130,44 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
       </div>
       <div className="pm-grid category-grid">
         {sorted.map((c) => (
-          <Link key={c.id} href={`/admin/products/category/${c.id}`} className="card pm-card category-card">
-            <div className="pm-card-media">
+          <div
+            key={c.id}
+            className={`card pm-card category-card${dragId === c.id ? " dragging" : ""}${overId === c.id ? " drag-over" : ""}`}
+            draggable
+            onDragStart={() => setDragId(c.id)}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setOverId(c.id);
+            }}
+            onDragLeave={() => setOverId((id) => (id === c.id ? null : id))}
+            onDrop={(e) => {
+              e.preventDefault();
+              onDrop(c.id);
+            }}
+            onDragEnd={() => {
+              setDragId(null);
+              setOverId(null);
+            }}
+          >
+            <Link href={`/admin/products/category/${c.id}`} className="pm-card-media">
               {c.coverPath ? (
                 <img src={mediaUrl(c.coverPath)} alt={c.name} />
               ) : (
                 <div className="pm-card-fallback">{c.emoji}</div>
               )}
-            </div>
+            </Link>
             <div className="body">
-              <div className="cat">{c.emoji} Category</div>
-              <h4>{c.name}</h4>
+              <div className="cat">
+                <span className="dnd-handle" title="Drag to reorder">
+                  ⠿
+                </span>{" "}
+                {c.emoji} Category
+              </div>
+              <h4>
+                <Link href={`/admin/products/category/${c.id}`}>{c.name}</Link>
+              </h4>
               <p className="cell-sub">
-                Order #{c.sortOrder} · {c.productCount} product{c.productCount === 1 ? "" : "s"}
+                {c.productCount} product{c.productCount === 1 ? "" : "s"}
               </p>
               <div className="pm-card-actions" onClick={(e) => e.preventDefault()}>
                 <button
@@ -146,7 +200,7 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
                 </button>
               </div>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
 
@@ -156,36 +210,15 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
             <h3>{editing ? "Edit Category" : "New Category"}</h3>
             {error && <div className="alert error">{error}</div>}
             {editing && <input type="hidden" name="id" value={editing.id} />}
+            <input type="hidden" name="sortOrder" value={editing?.sortOrder ?? items.length} />
             <div className="form-stack">
               <div className="field">
                 <label htmlFor="cat-name">Name</label>
-                <input
-                  id="cat-name"
-                  name="name"
-                  required
-                  defaultValue={editing?.name || ""}
-                  placeholder="e.g. Sparklers"
-                />
+                <input id="cat-name" name="name" required defaultValue={editing?.name || ""} placeholder="e.g. Sparklers" />
               </div>
               <div className="field">
                 <label htmlFor="cat-emoji">Emoji</label>
-                <input
-                  id="cat-emoji"
-                  name="emoji"
-                  defaultValue={editing?.emoji || "🎆"}
-                  maxLength={8}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="cat-sort">Display order (lower = first)</label>
-                <input
-                  id="cat-sort"
-                  name="sortOrder"
-                  type="number"
-                  min={0}
-                  step={1}
-                  defaultValue={editing?.sortOrder ?? 0}
-                />
+                <input id="cat-emoji" name="emoji" defaultValue={editing?.emoji || "🎆"} maxLength={8} />
               </div>
               <div className="field">
                 <label htmlFor="cat-desc">Description</label>

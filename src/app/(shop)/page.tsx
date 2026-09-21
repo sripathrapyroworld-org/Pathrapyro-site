@@ -88,7 +88,7 @@ export default async function HomePage() {
             </p>
             <div className="cta-row">
               <Link className="btn btn-primary" href="/shop">🛍️ Shop Crackers</Link>
-              <Link className="btn btn-outline" href="/quick-order">⚡ Quick Order</Link>
+              <Link className="btn btn-outline" href="/shop">⚡ Quick Order</Link>
               <WhatsAppCta className="btn btn-wa" text="Hi, I want to enquire about crackers">
                 🟢 WhatsApp Enquiry
               </WhatsAppCta>
@@ -115,7 +115,7 @@ export default async function HomePage() {
               <Countdown endsAt={settings.countdownEndsAt} />
               {settings.countdownNote && <p className="countdown-note">{settings.countdownNote}</p>}
               <div className="quick-order">
-                <Link className="btn btn-primary btn-block" href="/quick-order">
+                <Link className="btn btn-primary btn-block" href="/shop">
                   {settings.countdownButtonLabel}
                 </Link>
               </div>

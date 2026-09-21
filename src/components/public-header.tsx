@@ -10,7 +10,6 @@ import type { SiteSettings } from "@/lib/settings";
 const NAV = [
   { href: "/", label: "Home" },
   { href: "/shop", label: "Shop" },
-  { href: "/quick-order", label: "Quick Order" },
   { href: "/combos", label: "Combo Packs" },
   { href: "/about", label: "About Us" },
   { href: "/contact", label: "Contact" },
@@ -68,6 +67,9 @@ export function PublicHeader({
             ))}
           </nav>
           <div className="nav-actions">
+            <a className="nav-pricelist" href="/api/pricelist" title="Download full price list PDF">
+              ⬇ Price List
+            </a>
             <Link href="/shop" className="icon-btn" title="Search">
               ⌕
             </Link>
@@ -81,6 +83,11 @@ export function PublicHeader({
           </div>
         </div>
       </header>
+      {settings.license && (
+        <div className="license-bar">
+          <div className="wrap">License No: {settings.license}</div>
+        </div>
+      )}
       <div className="strip">
         <div className="track">
           <span>🎆 DIWALI MEGA SALE — FLAT {settings.discountBadgePercent} OFF</span>

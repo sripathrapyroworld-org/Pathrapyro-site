@@ -68,8 +68,8 @@ export function CheckoutForm({ prefill }: { prefill: Prefill; loggedIn?: boolean
           <div className="eyebrow">Confirm Order</div>
           <h1>Place Your Order</h1>
           <p>
-            Your quote is confirmed. Review delivery details and submit your order. Our team will share payment
-            instructions — once payment is received, we will process and dispatch your order.
+            Review delivery details and submit your order. Packing and shipping charges can be added by our team after
+            placement if needed. Payment is collected offline once confirmed.
           </p>
         </div>
       </div>
@@ -103,8 +103,8 @@ export function CheckoutForm({ prefill }: { prefill: Prefill; loggedIn?: boolean
               </div>
             </div>
             <p className="cart-checkout-hint" style={{ marginTop: 14 }}>
-              Payment is collected offline (UPI / bank transfer / cash). You will receive a call or WhatsApp with
-              payment details after placing the order.
+              Payment is collected offline (UPI / bank transfer / cash). Packing &amp; shipping may be added by admin
+              after you place the order — you will be contacted with the final total and payment details.
             </p>
             <button className="btn btn-primary btn-block" style={{ marginTop: 18 }} disabled={busy}>
               {busy ? "Placing order…" : `Place Order — ${formatInr(totals.total)}`}

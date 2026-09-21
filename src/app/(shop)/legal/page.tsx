@@ -15,8 +15,8 @@ export default async function LegalPage() {
   const items = [
     {
       n: "01",
-      h: "Order by Enquiry & Placement",
-      p: "Add items to your cart and send an enquiry. Our licensed team confirms packing, shipping, and the final quote. You then place the order on the website — payment is collected offline (UPI, bank transfer, or cash).",
+      h: "Direct Order Placement",
+      p: "Add items to your cart and place the order on the website. Packing and shipping charges may be added by our licensed team after your order is placed. Payment is collected offline (UPI, bank transfer, or cash).",
     },
     { n: "02", h: "Age & Local Rules", p: "Buyers must be 18+. Cracker bursting timings and green-cracker mandates vary by local authority — please check before use." },
     {

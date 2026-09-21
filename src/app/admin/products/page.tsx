@@ -11,6 +11,7 @@ export default async function ProductsPage() {
       emoji: true,
       description: true,
       coverPath: true,
+      sortOrder: true,
       _count: { select: { products: true } },
     },
   });
@@ -23,6 +24,7 @@ export default async function ProductsPage() {
         emoji: c.emoji,
         description: c.description,
         coverPath: c.coverPath,
+        sortOrder: c.sortOrder,
         productCount: c._count.products,
       }))}
     />

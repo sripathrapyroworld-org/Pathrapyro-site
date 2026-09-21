@@ -166,11 +166,11 @@ export function CartProvider({
     () =>
       cartTotals(items, {
         gstPercent,
-        feesPending: !quoteApplies,
-        packingCharge: customerPackingCharge,
-        shippingCharge: customerShippingCharge,
+        feesPending: false,
+        packingCharge: 0,
+        shippingCharge: 0,
       }),
-    [items, gstPercent, quoteApplies, customerPackingCharge, customerShippingCharge]
+    [items, gstPercent]
   );
   const count = totals.count;
 

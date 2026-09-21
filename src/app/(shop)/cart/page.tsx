@@ -7,18 +7,18 @@ import { TotalsBreakdown } from "@/components/totals-breakdown";
 import { formatInr, mediaUrl } from "@/lib/utils";
 
 export default function CartPage() {
-  const { items, setQty, remove, totals, quoteReady } = useCart();
+  const { items, setQty, remove, totals } = useCart();
 
   return (
     <>
       <div className="page-hero">
         <div className="wrap">
           <div className="crumb">Home / <span>Cart</span></div>
-          <div className="eyebrow">Review &amp; Enquire</div>
+          <div className="eyebrow">Review &amp; Order</div>
           <h1>Your Cart</h1>
           <p>
-            Review your items and send an enquiry. Our team will confirm packing and shipping charges for your order
-            before you place it.
+            Review your items and place your order directly. Packing and shipping charges can be added by our team
+            after your order is placed, if needed.
           </p>
         </div>
       </div>
@@ -62,38 +62,30 @@ export default function CartPage() {
               <h4>Cart Summary</h4>
               {items.length > 0 && (
                 <div className="cart-enquire-note">
-                  <strong>Enquire before ordering</strong>
+                  <strong>Place order anytime</strong>
                   <p>
-                    Packing and shipping depend on your location and order size. Please enquire first — our team will
-                    apply the correct charges to your account and notify you when your order quote is ready.
+                    You can place your order now. If packing or shipping charges apply, our team will update them on
+                    your order and confirm the final total.
                   </p>
                 </div>
               )}
-              <TotalsBreakdown totals={totals} totalLabel={quoteReady ? "Grand Total" : "Estimated total"} />
+              <TotalsBreakdown totals={totals} totalLabel="Estimated total" />
               {items.length > 0 && (
                 <EnquireButton className="btn btn-wa btn-block" payload={{ kind: "cart" }} style={{ marginTop: 18 }}>
                   Enquire about these items
                 </EnquireButton>
               )}
-              {quoteReady ? (
-                <Link
-                  className="btn btn-primary btn-block"
-                  href="/checkout"
-                  style={{
-                    marginTop: 10,
-                    pointerEvents: items.length === 0 ? "none" : "auto",
-                    opacity: items.length === 0 ? 0.5 : 1,
-                  }}
-                >
-                  Place Order →
-                </Link>
-              ) : (
-                items.length > 0 && (
-                  <p className="cart-checkout-hint">
-                    Order placement unlocks after our team confirms packing &amp; shipping for your cart.
-                  </p>
-                )
-              )}
+              <Link
+                className="btn btn-primary btn-block"
+                href="/checkout"
+                style={{
+                  marginTop: 10,
+                  pointerEvents: items.length === 0 ? "none" : "auto",
+                  opacity: items.length === 0 ? 0.5 : 1,
+                }}
+              >
+                Place Order →
+              </Link>
               <Link className="btn btn-outline btn-block" href="/shop" style={{ marginTop: 10 }}>
                 Continue Shopping
               </Link>

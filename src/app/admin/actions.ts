@@ -220,6 +220,7 @@ export async function saveCategory(formData: FormData): Promise<ActionResult> {
     if (!name) return { ok: false, error: "Category name is required." };
     const emoji = String(formData.get("emoji") || "🎆").trim() || "🎆";
     const description = String(formData.get("description") || "").trim() || `${name} crackers and fireworks.`;
+    const sortOrder = Math.max(0, Math.round(Number(formData.get("sortOrder") || 0) || 0));
     let coverPath: string | undefined;
     const file = formData.get("cover") as File | null;
     if (file && typeof file !== "string" && file.size) {
@@ -232,15 +233,16 @@ export async function saveCategory(formData: FormData): Promise<ActionResult> {
           name,
           emoji,
           description,
+          sortOrder,
           ...(coverPath ? { coverPath } : {}),
         },
       });
       revalidatePath("/admin/products");
-    revalidatePath(`/admin/products/category/${id}`);
-    revalidatePath("/");
-    revalidatePath("/shop");
-    revalidateTag("categories");
-    return { ok: true, id, message: "Category updated." };
+      revalidatePath(`/admin/products/category/${id}`);
+      revalidatePath("/");
+      revalidatePath("/shop");
+      revalidateTag("categories");
+      return { ok: true, id, message: "Category updated." };
     }
     const maxSort = await prisma.category.aggregate({ _max: { sortOrder: true } });
     const created = await prisma.category.create({
@@ -250,7 +252,7 @@ export async function saveCategory(formData: FormData): Promise<ActionResult> {
         emoji,
         description,
         coverPath,
-        sortOrder: (maxSort._max.sortOrder ?? 0) + 1,
+        sortOrder: sortOrder || (maxSort._max.sortOrder ?? 0) + 1,
       },
     });
     revalidatePath("/admin/products");
@@ -260,6 +262,57 @@ export async function saveCategory(formData: FormData): Promise<ActionResult> {
     return { ok: true, id: created.id, message: "Category created." };
   } catch (e) {
     return fail(e, "Could not save category.");
+  }
+}
+
+export async function saveSubCategory(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    const id = String(formData.get("id") || "").trim();
+    const categoryId = String(formData.get("categoryId") || "").trim();
+    const name = String(formData.get("name") || "").trim();
+    if (!categoryId) return { ok: false, error: "Category is required." };
+    if (!name) return { ok: false, error: "Subcategory name is required." };
+    const sortOrder = Math.max(0, Math.round(Number(formData.get("sortOrder") || 0) || 0));
+    const slugBase = slugify(name) || "subcategory";
+    if (id) {
+      await prisma.subCategory.update({
+        where: { id },
+        data: { name, sortOrder },
+      });
+    } else {
+      await prisma.subCategory.create({
+        data: {
+          name,
+          categoryId,
+          slug: `${slugBase}-${Date.now().toString().slice(-4)}`,
+          sortOrder,
+        },
+      });
+    }
+    revalidatePath("/admin/products");
+    revalidatePath(`/admin/products/category/${categoryId}`);
+    revalidatePath("/shop");
+    revalidateTag("categories");
+    return { ok: true, message: id ? "Subcategory updated." : "Subcategory created." };
+  } catch (e) {
+    return fail(e, "Could not save subcategory.");
+  }
+}
+
+export async function deleteSubCategory(id: string): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    const sub = await prisma.subCategory.findUnique({ where: { id } });
+    if (!sub) return { ok: false, error: "Subcategory not found." };
+    await prisma.product.updateMany({ where: { subCategoryId: id }, data: { subCategoryId: null } });
+    await prisma.subCategory.delete({ where: { id } });
+    revalidatePath("/admin/products");
+    revalidatePath(`/admin/products/category/${sub.categoryId}`);
+    revalidatePath("/shop");
+    return { ok: true, message: "Subcategory deleted." };
+  } catch (e) {
+    return fail(e, "Could not delete subcategory.");
   }
 }
 
@@ -290,11 +343,20 @@ export async function saveProduct(formData: FormData): Promise<ActionResult> {
     if (!categoryId) return { ok: false, error: "Please select a category." };
     const cat = await prisma.category.findUnique({ where: { id: categoryId } });
     if (!cat) return { ok: false, error: "Selected category was not found." };
+    const subCategoryRaw = String(formData.get("subCategoryId") || "").trim();
+    const subCategoryId = subCategoryRaw || null;
+    if (subCategoryId) {
+      const sub = await prisma.subCategory.findFirst({ where: { id: subCategoryId, categoryId } });
+      if (!sub) return { ok: false, error: "Subcategory does not belong to this category." };
+    }
+    const sortOrder = Math.max(0, Math.round(Number(formData.get("sortOrder") || 0) || 0));
 
     const payload = {
       name,
       description: String(formData.get("description") || ""),
       categoryId,
+      subCategoryId,
+      sortOrder,
       mrp: Number(formData.get("mrp") || 0),
       salePrice: Number(formData.get("salePrice") || 0),
       stock: Number(formData.get("stock") || 0),
@@ -512,6 +574,38 @@ export async function deleteCombo(id: string): Promise<ActionResult> {
 }
 
 type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
+
+export async function updateOrderCharges(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    const orderId = String(formData.get("orderId") || "").trim();
+    if (!orderId) return { ok: false, error: "Order not found." };
+    const packingCharge = Math.max(0, Math.round(Number(formData.get("packingCharge") || 0) || 0));
+    const shippingCharge = Math.max(0, Math.round(Number(formData.get("shippingCharge") || 0) || 0));
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) return { ok: false, error: "Order not found." };
+    const total = order.subtotal + order.gstAmount + packingCharge + shippingCharge;
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { packingCharge, shippingCharge, total },
+    });
+    const shipment = await prisma.shipment.findUnique({ where: { orderId } });
+    if (shipment) {
+      await prisma.shipmentEvent.create({
+        data: {
+          shipmentId: shipment.id,
+          status: shipment.status,
+          note: `Packing ₹${packingCharge}, shipping ₹${shippingCharge} updated — new total ₹${total}`,
+        },
+      });
+    }
+    revalidatePath(`/admin/orders/${orderId}`);
+    revalidatePath("/admin/sales");
+    return { ok: true, message: "Packing & shipping charges updated." };
+  } catch (e) {
+    return fail(e, "Could not update order charges.");
+  }
+}
 
 export async function updateOrderPayment(formData: FormData): Promise<ActionResult> {
   try {

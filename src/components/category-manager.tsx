@@ -15,6 +15,7 @@ type Cat = {
   description: string;
   coverPath: string | null;
   productCount: number;
+  sortOrder: number;
 };
 
 export function CategoryManager({ categories }: { categories: Cat[] }) {
@@ -27,7 +28,7 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
   const [pending, startTransition] = useTransition();
 
   const sorted = useMemo(
-    () => [...categories].sort((a, b) => a.name.localeCompare(b.name)),
+    () => [...categories].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)),
     [categories]
   );
 
@@ -111,7 +112,9 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
             <div className="body">
               <div className="cat">{c.emoji} Category</div>
               <h4>{c.name}</h4>
-              <p className="cell-sub">{c.productCount} product{c.productCount === 1 ? "" : "s"}</p>
+              <p className="cell-sub">
+                Order #{c.sortOrder} · {c.productCount} product{c.productCount === 1 ? "" : "s"}
+              </p>
               <div className="pm-card-actions" onClick={(e) => e.preventDefault()}>
                 <button
                   type="button"
@@ -171,6 +174,17 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
                   name="emoji"
                   defaultValue={editing?.emoji || "🎆"}
                   maxLength={8}
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="cat-sort">Display order (lower = first)</label>
+                <input
+                  id="cat-sort"
+                  name="sortOrder"
+                  type="number"
+                  min={0}
+                  step={1}
+                  defaultValue={editing?.sortOrder ?? 0}
                 />
               </div>
               <div className="field">

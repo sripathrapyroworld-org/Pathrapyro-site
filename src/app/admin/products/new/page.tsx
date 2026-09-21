@@ -10,11 +10,15 @@ export default async function NewProductPage({
   const categories = await prisma.category.findMany({
     where: { slug: { not: "combo-packs" } },
     orderBy: { sortOrder: "asc" },
-    select: { id: true, name: true },
+    include: { subCategories: { orderBy: { sortOrder: "asc" }, select: { id: true, name: true } } },
   });
   return (
     <ProductEditor
-      categories={categories}
+      categories={categories.map((c) => ({
+        id: c.id,
+        name: c.name,
+        subCategories: c.subCategories,
+      }))}
       defaultCategoryId={cat && categories.some((c) => c.id === cat) ? cat : undefined}
     />
   );

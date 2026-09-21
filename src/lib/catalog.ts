@@ -5,11 +5,13 @@ import { coverPath, type ProductWithRelations } from "@/lib/product-map";
 const productListInclude = {
   images: { orderBy: { sortOrder: "asc" as const }, take: 1 },
   category: true,
+  subCategory: true,
 };
 
 const productDetailInclude = {
   images: { orderBy: { sortOrder: "asc" as const } },
   category: true,
+  subCategory: true,
 };
 
 export async function fetchPricedProducts(extraWhere: Record<string, unknown> = {}) {
@@ -17,7 +19,7 @@ export async function fetchPricedProducts(extraWhere: Record<string, unknown> = 
     prisma.product.findMany({
       where: { active: true, ...extraWhere },
       include: productListInclude,
-      orderBy: { popularity: "desc" },
+      orderBy: [{ sortOrder: "asc" }, { popularity: "desc" }],
     }),
     getActiveOffers(),
   ]);
@@ -45,7 +47,12 @@ export async function fetchPricedCombos(extraWhere: Record<string, unknown> = {}
 }
 
 export function toPricedCard(
-  p: ProductWithRelations & { effectiveSale: number }
+  p: ProductWithRelations & {
+    effectiveSale: number;
+    subCategoryId?: string | null;
+    subCategory?: { name: string; sortOrder: number } | null;
+    sortOrder?: number;
+  }
 ) {
   const cover = p.images.find((i) => i.isCover) || p.images[0];
   return {
@@ -56,6 +63,10 @@ export function toPricedCard(
     mrp: p.mrp,
     sale: p.effectiveSale,
     img: cover?.path || "",
+    subCategoryId: p.subCategoryId ?? null,
+    subCategoryName: p.subCategory?.name || null,
+    subCategorySort: p.subCategory?.sortOrder ?? 9999,
+    sortOrder: p.sortOrder ?? 0,
   };
 }
 

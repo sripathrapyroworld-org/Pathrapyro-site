@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { auth } from "@/auth";
 import { resolveCartLines } from "@/lib/checkout";
-import { cartQuoteKey, quoteAppliesForCart, resetCustomerQuote } from "@/lib/cart-quote";
+import { resetCustomerQuote } from "@/lib/cart-quote";
 import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/settings";
 import { cartTotals, nextOrderNumber } from "@/lib/utils";
@@ -29,25 +29,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Please fill all delivery details." }, { status: 400 });
   }
 
-  const cartKey = cartQuoteKey(rawItems);
-  if (!quoteAppliesForCart(user, cartKey)) {
-    return NextResponse.json(
-      {
-        error:
-          "Please enquire about your current cart first. Our team must confirm packing and shipping for this order.",
-      },
-      { status: 403 }
-    );
-  }
-
   const { lines: items, error } = await resolveCartLines(rawItems);
   if (error) return NextResponse.json({ error }, { status: 400 });
 
   const settings = await getSettings();
   const totals = cartTotals(items, {
     gstPercent: settings.gstPercent,
-    packingCharge: user.packingCharge,
-    shippingCharge: user.shippingCharge,
+    packingCharge: 0,
+    shippingCharge: 0,
+    feesPending: false,
   });
   const last = await prisma.order.findFirst({ orderBy: { createdAt: "desc" }, select: { orderNumber: true } });
   const orderNumber = nextOrderNumber(last?.orderNumber);
@@ -65,8 +55,8 @@ export async function POST(req: Request) {
       savings: totals.savings,
       gstPercent: totals.gstPercent,
       gstAmount: totals.gstAmount,
-      packingCharge: totals.packingCharge,
-      shippingCharge: totals.shippingCharge,
+      packingCharge: 0,
+      shippingCharge: 0,
       total: totals.total,
       paymentStatus: "pending",
       channel: "Website",
@@ -85,7 +75,7 @@ export async function POST(req: Request) {
       shipment: {
         create: {
           status: "placed",
-          events: { create: { status: "placed", note: "Order placed — awaiting payment" } },
+          events: { create: { status: "placed", note: "Order placed — awaiting payment / packing & shipping if needed" } },
         },
       },
     },
@@ -107,6 +97,7 @@ export async function POST(req: Request) {
   revalidatePath("/cart");
   revalidatePath("/checkout");
   revalidatePath("/admin/customers");
+  revalidatePath("/admin/sales");
 
   return NextResponse.json({
     orderId: order.id,

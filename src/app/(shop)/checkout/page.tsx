@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { CheckoutForm } from "@/components/checkout-form";
-import { currentCustomerCartKey, quoteAppliesForCart } from "@/lib/cart-quote";
 import { prisma } from "@/lib/prisma";
 import { privatePageMetadata } from "@/lib/seo";
 import { redirect } from "next/navigation";
@@ -22,14 +21,9 @@ export default async function CheckoutPage() {
       email: true,
       address: true,
       pincode: true,
-      quoteReady: true,
-      quoteCartKey: true,
     },
   });
   if (!u) redirect("/login?from=/checkout");
-
-  const cartKey = await currentCustomerCartKey(session.user.id);
-  if (!quoteAppliesForCart(u, cartKey)) redirect("/cart?quote=pending");
 
   const prefill = {
     name: u.name,

@@ -26,6 +26,8 @@ export function ProductEditor({
     name: string;
     description: string;
     categoryId: string;
+    subCategoryId: string | null;
+    sortOrder: number;
     mrp: number;
     salePrice: number;
     stock: number;
@@ -33,7 +35,7 @@ export function ProductEditor({
     active: boolean;
     images: Img[];
   };
-  categories: { id: string; name: string }[];
+  categories: { id: string; name: string; subCategories: { id: string; name: string }[] }[];
   defaultCategoryId?: string;
 }) {
   const router = useRouter();
@@ -42,6 +44,8 @@ export function ProductEditor({
   const [catId, setCatId] = useState(
     product?.categoryId || defaultCategoryId || categories[0]?.id || ""
   );
+  const [subCategoryId, setSubCategoryId] = useState(product?.subCategoryId || "");
+  const [sortOrder, setSortOrder] = useState(product?.sortOrder ?? 0);
   const [mrp, setMrp] = useState(product?.mrp || 0);
   const [sale, setSale] = useState(product?.salePrice || 0);
   const [stock, setStock] = useState(product?.stock || 0);
@@ -56,6 +60,7 @@ export function ProductEditor({
   const [pending, startTransition] = useTransition();
 
   const catName = categories.find((c) => c.id === catId)?.name || "Category";
+  const subOptions = categories.find((c) => c.id === catId)?.subCategories || [];
   const disc = discountPct(mrp, sale);
   const cover = images.find((i) => i.isCover) || images[0];
   const liveImg = pendingImages[0]?.preview || (cover ? mediaUrl(cover.path) : "");
@@ -145,7 +150,15 @@ export function ProductEditor({
             <div className="form-row two">
               <div className="field">
                 <label>Category</label>
-                <select name="categoryId" value={catId} onChange={(e) => setCatId(e.target.value)} required>
+                <select
+                  name="categoryId"
+                  value={catId}
+                  onChange={(e) => {
+                    setCatId(e.target.value);
+                    setSubCategoryId("");
+                  }}
+                  required
+                >
                   <option value="" disabled>
                     Select category
                   </option>
@@ -155,6 +168,29 @@ export function ProductEditor({
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="field">
+                <label>Subcategory (optional)</label>
+                <select name="subCategoryId" value={subCategoryId} onChange={(e) => setSubCategoryId(e.target.value)}>
+                  <option value="">None</option>
+                  {subOptions.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="form-row two">
+              <div className="field">
+                <label>Display order (lower = first)</label>
+                <input
+                  type="number"
+                  name="sortOrder"
+                  min={0}
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(Number(e.target.value) || 0)}
+                />
               </div>
               <div className="field">
                 <label>Stock Qty</label>

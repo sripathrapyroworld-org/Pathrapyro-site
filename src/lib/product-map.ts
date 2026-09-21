@@ -7,8 +7,11 @@ export type ProductWithRelations = {
   mrp: number;
   salePrice: number;
   categoryId: string;
+  subCategoryId?: string | null;
+  sortOrder?: number;
   images: { isCover: boolean; path: string }[];
   category: { name: string };
+  subCategory?: { name: string; sortOrder: number } | null;
 };
 
 export function toCard(p: ProductWithRelations, saleOverride?: number): ProductCardData {

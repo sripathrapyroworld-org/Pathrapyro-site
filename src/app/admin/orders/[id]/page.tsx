@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { formatInr, formatOrderChannel, isOfflineOrder, mediaUrl, SHIPMENT_STEPS } from "@/lib/utils";
 import { updateShipment } from "@/app/admin/actions";
 import { PaymentStatusForm } from "@/components/payment-status-form";
+import { OrderChargesForm } from "@/components/order-charges-form";
+import { OrderWhatsAppButton } from "@/components/order-whatsapp-button";
 import Link from "next/link";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -24,6 +26,22 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           <div className="panel-head">
             <h3>{order.orderNumber}</h3>
             <div className="order-doc-actions">
+              <OrderWhatsAppButton
+                order={{
+                  orderNumber: order.orderNumber,
+                  customerName: order.customerName,
+                  customerPhone: order.customerPhone,
+                  total: order.total,
+                  packingCharge: order.packingCharge,
+                  shippingCharge: order.shippingCharge,
+                  paymentStatus: order.paymentStatus,
+                  items: order.items.map((i) => ({
+                    name: i.name,
+                    qty: i.qty,
+                    salePrice: i.salePrice,
+                  })),
+                }}
+              />
               <a className="btn btn-sm btn-primary" href={`/api/orders/${order.id}/invoice`}>
                 Invoice PDF
               </a>
@@ -44,6 +62,13 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             </span>
           </p>
           <PaymentStatusForm orderId={order.id} current={order.paymentStatus} />
+          <OrderChargesForm
+            orderId={order.id}
+            packingCharge={order.packingCharge}
+            shippingCharge={order.shippingCharge}
+            subtotal={order.subtotal}
+            gstAmount={order.gstAmount}
+          />
           <div className="table-wrap" style={{ marginTop: 16 }}>
             <table className="data">
               <thead><tr><th>Item</th><th>Qty</th><th>Amount</th></tr></thead>
@@ -66,16 +91,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               <span>GST ({order.gstPercent}%)</span><span className="amt">{formatInr(order.gstAmount)}</span>
             </div>
           )}
-          {order.packingCharge > 0 && (
-            <div className="summary-line">
-              <span>Packing</span><span className="amt">{formatInr(order.packingCharge)}</span>
-            </div>
-          )}
-          {order.shippingCharge > 0 && (
-            <div className="summary-line">
-              <span>Shipping</span><span className="amt">{formatInr(order.shippingCharge)}</span>
-            </div>
-          )}
+          <div className="summary-line">
+            <span>Packing</span><span className="amt">{formatInr(order.packingCharge)}</span>
+          </div>
+          <div className="summary-line">
+            <span>Shipping</span><span className="amt">{formatInr(order.shippingCharge)}</span>
+          </div>
           <div className="summary-line total">
             <span>Total</span><span className="amt">{formatInr(order.total)}</span>
           </div>

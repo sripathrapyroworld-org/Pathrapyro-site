@@ -101,34 +101,54 @@ model AdminLoginAttempt {
 }
 
 model Category {
-  id          String    @id @default(cuid())
-  name        String    @unique
-  slug        String    @unique
-  emoji       String
-  description String
-  coverPath   String?
-  sortOrder   Int       @default(0)
-  products    Product[]
-  offers      Offer[]
+  id            String        @id @default(cuid())
+  name          String        @unique
+  slug          String        @unique
+  emoji         String
+  description   String
+  coverPath     String?
+  sortOrder     Int           @default(0)
+  products      Product[]
+  subCategories SubCategory[]
+  offers        Offer[]
+}
+
+model SubCategory {
+  id         String    @id @default(cuid())
+  name       String
+  slug       String
+  categoryId String
+  category   Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  sortOrder  Int       @default(0)
+  products   Product[]
+
+  @@unique([categoryId, slug])
+  @@index([categoryId, sortOrder])
 }
 
 model Product {
-  id          String         @id @default(cuid())
-  name        String
-  slug        String         @unique
-  description String
-  categoryId  String
-  category    Category       @relation(fields: [categoryId], references: [id])
-  mrp         Int
-  salePrice   Int
-  stock       Int            @default(0)
-  featured    Boolean        @default(false)
-  popularity  Float          @default(0)
-  active      Boolean        @default(true)
-  images      ProductImage[]
-  cartItems   CartItem[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id            String         @id @default(cuid())
+  name          String
+  slug          String         @unique
+  description   String
+  categoryId    String
+  category      Category       @relation(fields: [categoryId], references: [id])
+  subCategoryId String?
+  subCategory   SubCategory?   @relation(fields: [subCategoryId], references: [id], onDelete: SetNull)
+  mrp           Int
+  salePrice     Int
+  stock         Int            @default(0)
+  featured      Boolean        @default(false)
+  popularity    Float          @default(0)
+  sortOrder     Int            @default(0)
+  active        Boolean        @default(true)
+  images        ProductImage[]
+  cartItems     CartItem[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([categoryId, sortOrder])
+  @@index([subCategoryId, sortOrder])
 }
 
 model ProductImage {

@@ -14,6 +14,8 @@ type ProductRow = {
   salePrice: number;
   stock: number;
   cover: string | null;
+  subCategoryName?: string | null;
+  sortOrder?: number;
 };
 
 export function CategoryProductsClient({
@@ -89,6 +91,9 @@ export function CategoryProductsClient({
                 <h4>
                   <Link href={`/admin/products/${p.id}`}>{p.name}</Link>
                 </h4>
+                <p className="cell-sub">
+                  {p.subCategoryName ? `${p.subCategoryName} · ` : ""}Order #{p.sortOrder ?? 0}
+                </p>
                 <div className="pm-price-row">
                   <span className="sale">{formatInr(p.salePrice)}</span>
                   <span className="mrp">{formatInr(p.mrp)}</span>

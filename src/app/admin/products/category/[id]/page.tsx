@@ -12,7 +12,7 @@ export default async function CategoryProductsPage({
   const { id } = await params;
   const category = await prisma.category.findUnique({
     where: { id },
-    select: { id: true, name: true, emoji: true },
+    select: { id: true, name: true },
   });
   if (!category) notFound();
 

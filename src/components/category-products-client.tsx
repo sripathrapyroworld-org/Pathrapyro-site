@@ -32,7 +32,7 @@ export function CategoryProductsClient({
   products,
   subCategories,
 }: {
-  category: { id: string; name: string; emoji: string };
+  category: { id: string; name: string };
   products: ProductRow[];
   subCategories: Sub[];
 }) {
@@ -154,7 +154,7 @@ export function CategoryProductsClient({
             ← All categories
           </Link>
           <h2 className="section-heading" style={{ marginTop: 8 }}>
-            {category.emoji} {category.name}
+            {category.name}
           </h2>
           <p className="dnd-hint">
             Drag products to reorder them, or drop into another subcategory group to assign them.

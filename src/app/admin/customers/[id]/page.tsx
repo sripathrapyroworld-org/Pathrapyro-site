@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CustomerEditor } from "@/components/customer-editor";
 import { CustomerQuoteForm } from "@/components/customer-quote-form";
 import { LeadStatusForm } from "@/components/lead-status-form";
 import { prisma } from "@/lib/prisma";
@@ -94,6 +95,16 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             </a>
           ) : null}
         </div>
+        <CustomerEditor
+          customer={{
+            id: customer.id,
+            name: customer.name,
+            phone: customer.phone,
+            email: customer.email,
+            address: customer.address,
+            pincode: customer.pincode,
+          }}
+        />
         <div className="customer-kpis">
           <div className="customer-kpi">
             <strong>{cartQty}</strong>

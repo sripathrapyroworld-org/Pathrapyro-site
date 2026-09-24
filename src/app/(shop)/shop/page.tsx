@@ -55,7 +55,6 @@ export default async function ShopPage() {
           id: c.id,
           name: c.name,
           slug: c.slug,
-          emoji: c.emoji,
           sortOrder: c.sortOrder,
           subCategories: c.subCategories,
         }))}

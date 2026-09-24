@@ -18,7 +18,6 @@ export type ShopCatalogCategory = {
   id: string;
   name: string;
   slug: string;
-  emoji: string;
   sortOrder: number;
   subCategories: { id: string; name: string; sortOrder: number }[];
 };
@@ -215,7 +214,7 @@ export function ShopCatalog({
                   className={`chip${openCat === c.id ? " active" : ""}`}
                   onClick={() => setOpenCat(c.id)}
                 >
-                  {c.emoji} {c.name}
+                  {c.name}
                 </button>
               ))}
             </div>
@@ -235,9 +234,7 @@ export function ShopCatalog({
               {visible.map(({ cat, subs, ungrouped }) => (
                 <div className="shop-cat-block card static" key={cat.id} id={`cat-${cat.slug}`}>
                   <div className="shop-cat-head">
-                    <h2>
-                      {cat.emoji} {cat.name}
-                    </h2>
+                    <h2>{cat.name}</h2>
                   </div>
 
                   {subs.map((sub) => (
@@ -294,7 +291,7 @@ export function ShopCatalog({
                   className={openCat === c.id ? "active" : ""}
                   onClick={() => pickCategory(c.id)}
                 >
-                  {c.emoji} {c.name}
+                  {c.name}
                   {openCat === c.id && <span>✓</span>}
                 </button>
               ))}

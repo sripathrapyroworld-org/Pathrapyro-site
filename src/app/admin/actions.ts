@@ -212,13 +212,84 @@ export async function saveCustomerQuote(formData: FormData): Promise<ActionResul
   }
 }
 
+export async function saveCustomer(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    const id = String(formData.get("id") || "").trim();
+    if (!id) return { ok: false, error: "Customer not found." };
+    const existing = await prisma.user.findFirst({ where: { id, role: "CUSTOMER" } });
+    if (!existing) return { ok: false, error: "Customer not found." };
+
+    const name = String(formData.get("name") || "").trim();
+    if (!name) return { ok: false, error: "Name is required." };
+    const phoneRaw = String(formData.get("phone") || "").trim();
+    const phoneDigits = phoneRaw.replace(/\D/g, "");
+    const phone = phoneDigits ? (phoneDigits.length === 10 ? `+91 ${phoneDigits}` : phoneRaw) : null;
+    const emailRaw = String(formData.get("email") || "").trim().toLowerCase();
+    const email = emailRaw || null;
+    const address = String(formData.get("address") || "").trim() || null;
+    const pincode = String(formData.get("pincode") || "").trim() || null;
+
+    if (phone) {
+      const conflict = await prisma.user.findFirst({
+        where: { phone, id: { not: id } },
+        select: { id: true },
+      });
+      if (conflict) return { ok: false, error: "Another account already uses this phone number." };
+    }
+    if (email) {
+      const conflict = await prisma.user.findFirst({
+        where: { email, id: { not: id } },
+        select: { id: true },
+      });
+      if (conflict) return { ok: false, error: "Another account already uses this email." };
+    }
+
+    await prisma.user.update({
+      where: { id },
+      data: { name, phone, email, address, pincode },
+    });
+
+    revalidatePath("/admin/customers");
+    revalidatePath(`/admin/customers/${id}`);
+    return { ok: true, message: "Customer updated." };
+  } catch (e) {
+    return fail(e, "Could not update customer.");
+  }
+}
+
+export async function deleteCustomer(id: string): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    const customer = await prisma.user.findFirst({
+      where: { id, role: "CUSTOMER" },
+      select: { id: true, name: true },
+    });
+    if (!customer) return { ok: false, error: "Customer not found." };
+
+    await prisma.$transaction([
+      prisma.cartItem.deleteMany({ where: { userId: id } }),
+      prisma.lead.updateMany({ where: { userId: id }, data: { userId: null } }),
+      prisma.order.updateMany({ where: { userId: id }, data: { userId: null } }),
+      prisma.user.delete({ where: { id } }),
+    ]);
+
+    revalidatePath("/admin/customers");
+    revalidatePath("/admin");
+    revalidateTag("carts");
+    return { ok: true, message: `Customer “${customer.name}” deleted.` };
+  } catch (e) {
+    return fail(e, "Could not delete customer.");
+  }
+}
+
 export async function saveCategory(formData: FormData): Promise<ActionResult> {
   try {
     await requireAdmin();
     const id = String(formData.get("id") || "");
     const name = String(formData.get("name") || "").trim();
     if (!name) return { ok: false, error: "Category name is required." };
-    const emoji = String(formData.get("emoji") || "🎆").trim() || "🎆";
+    const emoji = "";
     const description = String(formData.get("description") || "").trim() || `${name} crackers and fireworks.`;
     const sortOrder = Math.max(0, Math.round(Number(formData.get("sortOrder") || 0) || 0));
     let coverPath: string | undefined;

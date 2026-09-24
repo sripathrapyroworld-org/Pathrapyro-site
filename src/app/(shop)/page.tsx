@@ -214,7 +214,6 @@ export default async function HomePage() {
                   backgroundImage: `linear-gradient(180deg, rgba(13,7,22,0.15), rgba(13,7,22,0.92)), url('${mediaUrl(c.coverPath)}')`,
                 }}
               >
-                <div className="emoji">{c.emoji}</div>
                 <div className="name">{c.name}</div>
                 <div className="count">{c._count.products || "10+"} items</div>
               </Link>

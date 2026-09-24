@@ -11,7 +11,6 @@ import { mediaUrl } from "@/lib/utils";
 type Cat = {
   id: string;
   name: string;
-  emoji: string;
   description: string;
   coverPath: string | null;
   productCount: number;
@@ -153,7 +152,7 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
               {c.coverPath ? (
                 <img src={mediaUrl(c.coverPath)} alt={c.name} />
               ) : (
-                <div className="pm-card-fallback">{c.emoji}</div>
+                <div className="pm-card-fallback">{c.name.slice(0, 1).toUpperCase()}</div>
               )}
             </Link>
             <div className="body">
@@ -161,7 +160,7 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
                 <span className="dnd-handle" title="Drag to reorder">
                   ⠿
                 </span>{" "}
-                {c.emoji} Category
+                Category
               </div>
               <h4>
                 <Link href={`/admin/products/category/${c.id}`}>{c.name}</Link>
@@ -215,10 +214,6 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
               <div className="field">
                 <label htmlFor="cat-name">Name</label>
                 <input id="cat-name" name="name" required defaultValue={editing?.name || ""} placeholder="e.g. Sparklers" />
-              </div>
-              <div className="field">
-                <label htmlFor="cat-emoji">Emoji</label>
-                <input id="cat-emoji" name="emoji" defaultValue={editing?.emoji || "🎆"} maxLength={8} />
               </div>
               <div className="field">
                 <label htmlFor="cat-desc">Description</label>

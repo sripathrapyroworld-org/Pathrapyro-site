@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CustomerRowActions } from "@/components/customer-editor";
 import { prisma } from "@/lib/prisma";
 import { formatInr } from "@/lib/utils";
 
@@ -62,8 +63,11 @@ export default async function CustomersPage({
               return (
                 <tr key={c.id}>
                   <td>
-                    {c.name}
-                    <div className="cell-sub">{c.phone}{c.email ? ` · ${c.email}` : ""}</div>
+                    <Link href={`/admin/customers/${c.id}`}>{c.name}</Link>
+                    <div className="cell-sub">
+                      {c.phone}
+                      {c.email ? ` · ${c.email}` : ""}
+                    </div>
                   </td>
                   <td>
                     {cartQty > 0 ? (
@@ -73,9 +77,7 @@ export default async function CustomersPage({
                     )}
                   </td>
                   <td>
-                    <span className="cell-sub">
-                      {lastCart ? lastCart.toLocaleString("en-IN") : "—"}
-                    </span>
+                    <span className="cell-sub">{lastCart ? lastCart.toLocaleString("en-IN") : "—"}</span>
                   </td>
                   <td>
                     {c.orders.length}
@@ -89,9 +91,7 @@ export default async function CustomersPage({
                     {openLeads > 0 ? <span className="pill new">{openLeads} open</span> : c.leads.length || "—"}
                   </td>
                   <td>
-                    <Link className="icon-mini" href={`/admin/customers/${c.id}`} title="View">
-                      👁
-                    </Link>
+                    <CustomerRowActions customer={{ id: c.id, name: c.name }} />
                   </td>
                 </tr>
               );

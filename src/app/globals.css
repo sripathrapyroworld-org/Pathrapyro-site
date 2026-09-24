@@ -184,7 +184,10 @@ nav.links a.navlink.active, nav.links button.navlink.active{color:var(--night); 
   background:linear-gradient(120deg,var(--gold),var(--marigold));
   color:var(--night); font-weight:800; font-size:1rem;
 }
-.customer-name{font-family:var(--body); font-size:1.35rem; color:var(--cream); margin:0 0 6px;}
+.customer-editor{margin-top:14px;}
+.customer-editor-actions{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;}
+.customer-edit-form{margin-top:8px; padding:18px;}
+.cat-tile .emoji{display:none;}
 .customer-contact{margin:0 0 6px; color:var(--cream-dim); font-size:0.9rem;}
 .customer-contact a{color:var(--gold-2);}
 .customer-kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:12px;}

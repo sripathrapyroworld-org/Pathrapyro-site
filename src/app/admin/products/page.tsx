@@ -8,7 +8,6 @@ export default async function ProductsPage() {
     select: {
       id: true,
       name: true,
-      emoji: true,
       description: true,
       coverPath: true,
       sortOrder: true,
@@ -21,7 +20,6 @@ export default async function ProductsPage() {
       categories={categories.map((c) => ({
         id: c.id,
         name: c.name,
-        emoji: c.emoji,
         description: c.description,
         coverPath: c.coverPath,
         sortOrder: c.sortOrder,

@@ -56,10 +56,19 @@ export function ManualBillForm({
   }
 
   function setQty(kind: string, id: string, qty: number) {
-    setLines((prev) => {
-      if (qty <= 0) return prev.filter((l) => !(l.kind === kind && l.id === id));
-      return prev.map((l) => (l.kind === kind && l.id === id ? { ...l, qty } : l));
-    });
+    setLines((prev) =>
+      prev.map((l) => (l.kind === kind && l.id === id ? { ...l, qty: Math.max(0, qty) } : l))
+    );
+  }
+
+  function removeLine(kind: string, id: string) {
+    setLines((prev) => prev.filter((l) => !(l.kind === kind && l.id === id)));
+  }
+
+  function normalizeQty(kind: string, id: string) {
+    setLines((prev) =>
+      prev.map((l) => (l.kind === kind && l.id === id ? { ...l, qty: Math.max(1, l.qty || 1) } : l))
+    );
   }
 
   function setRate(kind: string, id: string, sale: number) {
@@ -79,6 +88,8 @@ export function ManualBillForm({
       setError("Add at least one product.");
       return;
     }
+    const normalized = lines.map((l) => ({ ...l, qty: Math.max(1, l.qty || 1) }));
+    setLines(normalized);
     const fd = new FormData(e.currentTarget);
     startTransition(async () => {
       const res = await fetch("/api/admin/orders/manual", {
@@ -97,7 +108,7 @@ export function ManualBillForm({
           gstPercent: gst,
           paymentStatus,
           deductStock,
-          items: lines.map((l) => ({
+          items: normalized.map((l) => ({
             kind: l.kind,
             id: l.id,
             name: l.name,
@@ -188,52 +199,52 @@ export function ManualBillForm({
         {lines.length === 0 ? (
           <p className="cell-sub">Search and tap a product to add it to this bill.</p>
         ) : (
-          <div className="table-wrap" style={{ marginTop: 12 }}>
-            <table className="data" style={{ minWidth: 0 }}>
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th>Qty</th>
-                  <th>Rate</th>
-                  <th>Amount</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {lines.map((l) => (
-                  <tr key={`${l.kind}:${l.id}`}>
-                    <td>
-                      {l.name}
-                      <div className="cell-sub">{l.kind === "combo" ? "Combo Pack" : l.category}</div>
-                    </td>
-                    <td>
-                      <input
-                        className="manual-num"
-                        type="number"
-                        min={1}
-                        value={l.qty}
-                        onChange={(e) => setQty(l.kind, l.id, Number(e.target.value) || 0)}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        className="manual-num"
-                        type="number"
-                        min={0}
-                        value={l.sale}
-                        onChange={(e) => setRate(l.kind, l.id, Number(e.target.value) || 0)}
-                      />
-                    </td>
-                    <td>{formatInr(l.sale * l.qty)}</td>
-                    <td>
-                      <button type="button" className="icon-mini" onClick={() => setQty(l.kind, l.id, 0)} title="Remove">
-                        ✕
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="manual-lines">
+            {lines.map((l) => (
+              <div className="manual-line" key={`${l.kind}:${l.id}`}>
+                <div className="manual-line-name">
+                  <strong>{l.name}</strong>
+                  <div className="cell-sub">{l.kind === "combo" ? "Combo Pack" : l.category}</div>
+                </div>
+                <div className="manual-line-qty">
+                  <span className="manual-line-head">Qty</span>
+                  <input
+                    className="manual-num"
+                    type="number"
+                    min={1}
+                    value={l.qty || ""}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (raw === "") {
+                        setQty(l.kind, l.id, 0);
+                        return;
+                      }
+                      setQty(l.kind, l.id, Number(raw) || 0);
+                    }}
+                    onBlur={() => normalizeQty(l.kind, l.id)}
+                  />
+                </div>
+                <div className="manual-line-rate">
+                  <span className="manual-line-head">Rate</span>
+                  <input
+                    className="manual-num"
+                    type="number"
+                    min={0}
+                    value={l.sale}
+                    onChange={(e) => setRate(l.kind, l.id, Number(e.target.value) || 0)}
+                  />
+                </div>
+                <div className="manual-line-amt">
+                  <span className="manual-line-head">Amount</span>
+                  {formatInr(l.sale * l.qty)}
+                </div>
+                <div className="manual-line-remove">
+                  <button type="button" className="icon-mini" onClick={() => removeLine(l.kind, l.id)} title="Remove product">
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </section>

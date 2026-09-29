@@ -211,7 +211,7 @@ export default async function HomePage() {
                 href={c.slug === "combo-packs" ? "/combos" : `/category/${c.slug}`}
                 className="cat-tile"
                 style={{
-                  backgroundImage: `linear-gradient(180deg, rgba(13,7,22,0.15), rgba(13,7,22,0.92)), url('${mediaUrl(c.coverPath)}')`,
+                  backgroundImage: `url('${mediaUrl(c.coverPath)}')`,
                 }}
               >
                 <div className="name">{c.name}</div>

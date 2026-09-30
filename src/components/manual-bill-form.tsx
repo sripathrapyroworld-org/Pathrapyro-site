@@ -49,8 +49,12 @@ export function ManualBillForm({
   function addItem(item: CatalogItem) {
     setLines((prev) => {
       const found = prev.find((l) => l.kind === item.kind && l.id === item.id);
-      if (found) return prev.map((l) => (l.kind === item.kind && l.id === item.id ? { ...l, qty: l.qty + 1 } : l));
-      return [...prev, { ...item, qty: 1 }];
+      if (found) {
+        const bumped = { ...found, qty: found.qty + 1 };
+        const rest = prev.filter((l) => !(l.kind === item.kind && l.id === item.id));
+        return [bumped, ...rest];
+      }
+      return [{ ...item, qty: 1 }, ...prev];
     });
     setQ("");
   }

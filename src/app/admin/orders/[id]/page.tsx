@@ -26,6 +26,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           <div className="panel-head">
             <h3>{order.orderNumber}</h3>
             <div className="order-doc-actions">
+              <Link className="btn btn-sm btn-primary" href={`/admin/orders/${order.id}/edit`}>
+                Edit bill
+              </Link>
               <OrderWhatsAppButton
                 order={{
                   orderNumber: order.orderNumber,
@@ -42,7 +45,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                   })),
                 }}
               />
-              <a className="btn btn-sm btn-primary" href={`/api/orders/${order.id}/invoice`}>
+              <a className="btn btn-sm btn-outline" href={`/api/orders/${order.id}/invoice`}>
                 Invoice PDF
               </a>
               <a className="btn btn-sm btn-outline" href={`/api/admin/orders/${order.id}/checklist`}>

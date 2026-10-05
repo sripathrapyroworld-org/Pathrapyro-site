@@ -16,21 +16,41 @@ export type CatalogItem = {
 
 type Line = CatalogItem & { qty: number };
 
+export type ManualBillInitial = {
+  orderId: string;
+  orderNumber: string;
+  customer: {
+    name: string;
+    phone: string;
+    email: string;
+    address: string;
+    pincode: string;
+  };
+  lines: Line[];
+  packingCharge: number;
+  shippingCharge: number;
+  gstPercent: number;
+  paymentStatus: "paid" | "pending";
+};
+
 export function ManualBillForm({
   catalog,
   gstPercent,
+  initial,
 }: {
   catalog: CatalogItem[];
   gstPercent: number;
+  initial?: ManualBillInitial;
 }) {
   const router = useRouter();
+  const editing = Boolean(initial);
   const [q, setQ] = useState("");
-  const [lines, setLines] = useState<Line[]>([]);
-  const [packingCharge, setPackingCharge] = useState(0);
-  const [shippingCharge, setShippingCharge] = useState(0);
-  const [gst, setGst] = useState(gstPercent);
-  const [paymentStatus, setPaymentStatus] = useState<"paid" | "pending">("paid");
-  const [deductStock, setDeductStock] = useState(true);
+  const [lines, setLines] = useState<Line[]>(initial?.lines || []);
+  const [packingCharge, setPackingCharge] = useState(initial?.packingCharge ?? 0);
+  const [shippingCharge, setShippingCharge] = useState(initial?.shippingCharge ?? 0);
+  const [gst, setGst] = useState(initial?.gstPercent ?? gstPercent);
+  const [paymentStatus, setPaymentStatus] = useState<"paid" | "pending">(initial?.paymentStatus ?? "paid");
+  const [deductStock, setDeductStock] = useState(!editing);
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
 
@@ -79,10 +99,10 @@ export function ManualBillForm({
     setLines((prev) => prev.map((l) => (l.kind === kind && l.id === id ? { ...l, sale: Math.max(0, sale) } : l)));
   }
 
-  const subtotal = lines.reduce((s, l) => s + l.sale * l.qty, 0);
-  const orig = lines.reduce((s, l) => s + l.mrp * l.qty, 0);
+  const subtotal = lines.reduce((s, l) => s + l.sale * Math.max(0, l.qty), 0);
+  const orig = lines.reduce((s, l) => s + l.mrp * Math.max(0, l.qty), 0);
   const savings = Math.max(0, orig - subtotal);
-  const gstAmount = Math.round(subtotal * Math.max(0, gst) / 100);
+  const gstAmount = Math.round((subtotal * Math.max(0, gst)) / 100);
   const total = subtotal + gstAmount + Math.max(0, packingCharge) + Math.max(0, shippingCharge);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -95,40 +115,43 @@ export function ManualBillForm({
     const normalized = lines.map((l) => ({ ...l, qty: Math.max(1, l.qty || 1) }));
     setLines(normalized);
     const fd = new FormData(e.currentTarget);
+    const payload = {
+      customer: {
+        name: String(fd.get("name") || ""),
+        phone: String(fd.get("phone") || ""),
+        email: String(fd.get("email") || ""),
+        address: String(fd.get("address") || ""),
+        pincode: String(fd.get("pincode") || ""),
+      },
+      packingCharge,
+      shippingCharge,
+      gstPercent: gst,
+      paymentStatus,
+      deductStock,
+      items: normalized.map((l) => ({
+        kind: l.kind,
+        id: l.id,
+        name: l.name,
+        category: l.category,
+        mrp: l.mrp,
+        sale: l.sale,
+        qty: l.qty,
+      })),
+    };
+
     startTransition(async () => {
-      const res = await fetch("/api/admin/orders/manual", {
-        method: "POST",
+      const url = editing ? `/api/admin/orders/${initial!.orderId}` : "/api/admin/orders/manual";
+      const res = await fetch(url, {
+        method: editing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customer: {
-            name: String(fd.get("name") || ""),
-            phone: String(fd.get("phone") || ""),
-            email: String(fd.get("email") || ""),
-            address: String(fd.get("address") || ""),
-            pincode: String(fd.get("pincode") || ""),
-          },
-          packingCharge,
-          shippingCharge,
-          gstPercent: gst,
-          paymentStatus,
-          deductStock,
-          items: normalized.map((l) => ({
-            kind: l.kind,
-            id: l.id,
-            name: l.name,
-            category: l.category,
-            mrp: l.mrp,
-            sale: l.sale,
-            qty: l.qty,
-          })),
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Could not create bill.");
+        setError(data.error || (editing ? "Could not update bill." : "Could not create bill."));
         return;
       }
-      router.push(`/admin/orders/${data.orderId}?created=1`);
+      router.push(`/admin/orders/${data.orderId}`);
       router.refresh();
     });
   }
@@ -140,38 +163,51 @@ export function ManualBillForm({
       <section className="card panel static">
         <h3>Customer details</h3>
         <p className="cell-sub" style={{ margin: "6px 0 14px" }}>
-          This bill is saved as an <strong>offline order</strong> in Sales Management.
+          {editing ? (
+            <>
+              Editing order <strong>{initial?.orderNumber}</strong>. Changes update the bill, invoice, and checklist.
+            </>
+          ) : (
+            <>
+              This bill is saved as an <strong>offline order</strong> in Sales Management.
+            </>
+          )}
         </p>
         <div className="form-row">
           <div className="form-row two">
             <div className="field">
               <label>Customer name</label>
-              <input name="name" required placeholder="Walk-in customer" />
+              <input name="name" required placeholder="Walk-in customer" defaultValue={initial?.customer.name || ""} />
             </div>
             <div className="field">
               <label>Phone</label>
-              <input name="phone" required placeholder="10-digit mobile" />
+              <input name="phone" required placeholder="10-digit mobile" defaultValue={initial?.customer.phone || ""} />
             </div>
           </div>
           <div className="form-row two">
             <div className="field">
               <label>Email (optional)</label>
-              <input name="email" type="email" placeholder="optional" />
+              <input name="email" type="email" placeholder="optional" defaultValue={initial?.customer.email || ""} />
             </div>
             <div className="field">
               <label>Pincode</label>
-              <input name="pincode" placeholder="626130" />
+              <input name="pincode" placeholder="626130" defaultValue={initial?.customer.pincode || ""} />
             </div>
           </div>
           <div className="field">
             <label>Address (optional for counter sale)</label>
-            <textarea name="address" rows={2} placeholder="Shop pickup / delivery address" />
+            <textarea
+              name="address"
+              rows={2}
+              placeholder="Shop pickup / delivery address"
+              defaultValue={initial?.customer.address || ""}
+            />
           </div>
         </div>
       </section>
 
       <section className="card panel static">
-        <h3>Add products</h3>
+        <h3>{editing ? "Products" : "Add products"}</h3>
         <div className="search-box2" style={{ margin: "14px 0" }}>
           <input
             value={q}
@@ -240,7 +276,7 @@ export function ManualBillForm({
                 </div>
                 <div className="manual-line-amt">
                   <span className="manual-line-head">Amount</span>
-                  {formatInr(l.sale * l.qty)}
+                  {formatInr(l.sale * Math.max(0, l.qty))}
                 </div>
                 <div className="manual-line-remove">
                   <button type="button" className="icon-mini" onClick={() => removeLine(l.kind, l.id)} title="Remove product">
@@ -284,7 +320,11 @@ export function ManualBillForm({
           </div>
           <div className="field">
             <label>Payment</label>
-            <select className="admin-select" value={paymentStatus} onChange={(e) => setPaymentStatus(e.target.value as "paid" | "pending")}>
+            <select
+              className="admin-select"
+              value={paymentStatus}
+              onChange={(e) => setPaymentStatus(e.target.value as "paid" | "pending")}
+            >
               <option value="paid">Paid (cash / UPI / bank)</option>
               <option value="pending">Pending</option>
             </select>
@@ -292,20 +332,56 @@ export function ManualBillForm({
         </div>
         <label className="customer-quote-check" style={{ marginTop: 8 }}>
           <input type="checkbox" checked={deductStock} onChange={(e) => setDeductStock(e.target.checked)} />
-          <span>Deduct product stock for this bill</span>
+          <span>
+            {editing
+              ? "Adjust product stock for quantity changes on this update"
+              : "Deduct product stock for this bill"}
+          </span>
         </label>
 
         <div className="manual-totals">
-          <div className="summary-line"><span>{lines.reduce((s, l) => s + l.qty, 0)} items</span><span className="amt">{formatInr(subtotal)}</span></div>
-          {savings > 0 && <div className="summary-line"><span>You save</span><span className="amt">{formatInr(savings)}</span></div>}
-          {gstAmount > 0 && <div className="summary-line"><span>GST ({gst}%)</span><span className="amt">{formatInr(gstAmount)}</span></div>}
-          {packingCharge > 0 && <div className="summary-line"><span>Packing</span><span className="amt">{formatInr(packingCharge)}</span></div>}
-          {shippingCharge > 0 && <div className="summary-line"><span>Shipping</span><span className="amt">{formatInr(shippingCharge)}</span></div>}
-          <div className="summary-line total"><span>Grand total</span><span className="amt">{formatInr(total)}</span></div>
+          <div className="summary-line">
+            <span>{lines.reduce((s, l) => s + Math.max(0, l.qty), 0)} items</span>
+            <span className="amt">{formatInr(subtotal)}</span>
+          </div>
+          {savings > 0 && (
+            <div className="summary-line">
+              <span>You save</span>
+              <span className="amt">{formatInr(savings)}</span>
+            </div>
+          )}
+          {gstAmount > 0 && (
+            <div className="summary-line">
+              <span>GST ({gst}%)</span>
+              <span className="amt">{formatInr(gstAmount)}</span>
+            </div>
+          )}
+          {packingCharge > 0 && (
+            <div className="summary-line">
+              <span>Packing</span>
+              <span className="amt">{formatInr(packingCharge)}</span>
+            </div>
+          )}
+          {shippingCharge > 0 && (
+            <div className="summary-line">
+              <span>Shipping</span>
+              <span className="amt">{formatInr(shippingCharge)}</span>
+            </div>
+          )}
+          <div className="summary-line total">
+            <span>Grand total</span>
+            <span className="amt">{formatInr(total)}</span>
+          </div>
         </div>
 
         <button className="btn btn-primary" type="submit" disabled={pending} style={{ marginTop: 18 }}>
-          {pending ? "Creating bill…" : "Create offline bill"}
+          {pending
+            ? editing
+              ? "Saving…"
+              : "Creating bill…"
+            : editing
+              ? "Save bill changes"
+              : "Create offline bill"}
         </button>
       </section>
     </form>

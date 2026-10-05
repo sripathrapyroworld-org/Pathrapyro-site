@@ -62,8 +62,8 @@ export default async function SalesPage({
           <a className="btn btn-outline" href="/api/admin/sales.csv">⬇ Export CSV</a>
         </div>
       </div>
-      <div className="card table-wrap static">
-        <table className="data">
+      <div className="card table-wrap static sales-table-card">
+        <table className="data sales-table">
           <thead>
             <tr>
               <th>Order ID</th><th>Customer</th><th>Items</th><th>Amount</th><th>Payment</th><th>Channel</th><th>Date</th><th>Actions</th>
@@ -86,10 +86,19 @@ export default async function SalesPage({
                   </span>
                 </td>
                 <td><span className="cell-sub">{o.createdAt.toLocaleDateString("en-IN")}</span></td>
-                <td style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  <Link className="icon-mini" href={`/admin/orders/${o.id}`} title="View">👁</Link>
-                  <a className="icon-mini" href={`/api/orders/${o.id}/invoice`} title="Invoice PDF">🧾</a>
-                  <a className="icon-mini" href={`/api/admin/orders/${o.id}/checklist`} title="Checklist PDF">☑</a>
+                <td className="sales-actions">
+                  <Link className="icon-mini" href={`/admin/orders/${o.id}`} title="View">
+                    👁
+                  </Link>
+                  <Link className="icon-mini" href={`/admin/orders/${o.id}/edit`} title="Edit bill">
+                    ✎
+                  </Link>
+                  <a className="icon-mini" href={`/api/orders/${o.id}/invoice`} title="Invoice PDF">
+                    🧾
+                  </a>
+                  <a className="icon-mini" href={`/api/admin/orders/${o.id}/checklist`} title="Checklist PDF">
+                    ☑
+                  </a>
                 </td>
               </tr>
             ))}

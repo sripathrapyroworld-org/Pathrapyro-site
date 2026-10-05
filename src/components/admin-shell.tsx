@@ -65,7 +65,7 @@ export function AdminShell({
           </div>
         ))}
       </aside>
-      <div>
+      <div className="admin-content">
         <div className="admin-main">
           <div className="admin-topbar">
             <div className="left" style={{ display: "flex", alignItems: "center", gap: 14 }}>

@@ -14,7 +14,7 @@ export function QuickOrderTable({
   products: ProductCardData[];
   categories: string[];
 }) {
-  const { add, showToast, gstPercent, requireLogin } = useCart();
+  const { upsert, showToast, gstPercent } = useCart();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
   const [qty, setQty] = useState<Record<string, number>>({});
@@ -63,12 +63,11 @@ export function QuickOrderTable({
   }
 
   function pushToCart() {
-    if (!requireLogin()) return;
     let any = false;
     for (const p of products) {
       const n = qty[p.id] || 0;
       if (n <= 0) continue;
-      add(
+      upsert(
         {
           key: `product:${p.id}`,
           kind: "product",
@@ -84,12 +83,12 @@ export function QuickOrderTable({
       );
       any = true;
     }
-    if (any) {
-      setQty({});
-      window.location.href = "/cart";
-    } else {
+    if (!any) {
       showToast("⚠️ Please add quantity to at least one item");
+      return;
     }
+    setQty({});
+    window.location.href = "/cart";
   }
 
   function pickCategory(next: string) {

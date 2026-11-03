@@ -9,6 +9,14 @@ import { requireCustomerLogin } from "@/components/login-gate";
 
 const STORAGE = "pathra-cart-v1";
 
+function persistCart(items: CartLine[]) {
+  try {
+    localStorage.setItem(STORAGE, JSON.stringify(items));
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
 function mergeCartLines(a: CartLine[], b: CartLine[]): CartLine[] {
   const map = new Map<string, CartLine>();
   for (const src of [a, b]) {
@@ -30,6 +38,7 @@ type CartContextValue = {
   whatsapp: string;
   gstPercent: number;
   add: (line: Omit<CartLine, "qty">, qty?: number) => void;
+  upsert: (line: Omit<CartLine, "qty">, qty?: number) => void;
   setQty: (key: string, qty: number) => void;
   remove: (key: string) => void;
   clear: () => void;
@@ -82,11 +91,11 @@ export function CartProvider({
 
   useEffect(() => {
     if (!ready) return;
-    localStorage.setItem(STORAGE, JSON.stringify(items));
+    persistCart(items);
   }, [items, ready]);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || status === "loading") return;
     if (!resolvedUserId) {
       setSynced(true);
       return;
@@ -98,7 +107,11 @@ export function CartProvider({
       .then((data) => {
         if (cancelled) return;
         const remote = Array.isArray(data.items) ? (data.items as CartLine[]) : [];
-        setItems((local) => mergeCartLines(local, remote));
+        setItems((local) => {
+          const merged = mergeCartLines(local, remote);
+          persistCart(merged);
+          return merged;
+        });
       })
       .catch(() => {})
       .finally(() => {
@@ -107,16 +120,16 @@ export function CartProvider({
     return () => {
       cancelled = true;
     };
-  }, [resolvedUserId, ready]);
+  }, [resolvedUserId, ready, status]);
 
   useEffect(() => {
-    if (!resolvedUserId || !ready || !synced) return;
+    if (!resolvedUserId || !ready || !synced || status === "loading") return;
     fetch("/api/cart", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ items }),
     }).catch(() => {});
-  }, [items, resolvedUserId, ready, synced]);
+  }, [items, resolvedUserId, ready, synced, status]);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -128,33 +141,57 @@ export function CartProvider({
     [loggedIn, sessionPending]
   );
 
+  /** Guest-friendly: always saves to local cart (no login required). */
   const add = useCallback(
     (line: Omit<CartLine, "qty">, qty = 1) => {
-      requireLogin(() => {
-        const q = Math.max(1, qty);
-        setItems((prev) => {
-          const found = prev.find((i) => i.key === line.key);
-          if (found) return prev.map((i) => (i.key === line.key ? { ...i, qty: i.qty + q } : i));
-          return [...prev, { ...line, qty: q }];
-        });
-        showToast(`✅ ${line.name} added to cart`);
+      const q = Math.max(1, qty);
+      setItems((prev) => {
+        const found = prev.find((i) => i.key === line.key);
+        const next = found
+          ? prev.map((i) => (i.key === line.key ? { ...i, qty: i.qty + q } : i))
+          : [...prev, { ...line, qty: q }];
+        persistCart(next);
+        return next;
       });
+      showToast(`✅ ${line.name} added to cart`);
     },
-    [requireLogin, showToast]
+    [showToast]
   );
+
+  /** Set absolute qty for a line (used by shop Order Now). Persists immediately. */
+  const upsert = useCallback((line: Omit<CartLine, "qty">, qty = 1) => {
+    const q = Math.max(1, qty);
+    setItems((prev) => {
+      const found = prev.find((i) => i.key === line.key);
+      const next = found
+        ? prev.map((i) => (i.key === line.key ? { ...line, qty: q } : i))
+        : [...prev, { ...line, qty: q }];
+      persistCart(next);
+      return next;
+    });
+  }, []);
 
   const setQty = useCallback((key: string, qty: number) => {
     setItems((prev) => {
-      if (qty <= 0) return prev.filter((i) => i.key !== key);
-      return prev.map((i) => (i.key === key ? { ...i, qty } : i));
+      const next =
+        qty <= 0 ? prev.filter((i) => i.key !== key) : prev.map((i) => (i.key === key ? { ...i, qty } : i));
+      persistCart(next);
+      return next;
     });
   }, []);
 
   const remove = useCallback((key: string) => {
-    setItems((prev) => prev.filter((i) => i.key !== key));
+    setItems((prev) => {
+      const next = prev.filter((i) => i.key !== key);
+      persistCart(next);
+      return next;
+    });
   }, []);
 
-  const clear = useCallback(() => setItems([]), []);
+  const clear = useCallback(() => {
+    persistCart([]);
+    setItems([]);
+  }, []);
 
   const cartKey = useMemo(() => cartQuoteKeyFromLines(items), [items]);
   const quoteApplies = useMemo(
@@ -185,6 +222,7 @@ export function CartProvider({
       whatsapp,
       gstPercent,
       add,
+      upsert,
       setQty,
       remove,
       clear,
@@ -202,6 +240,7 @@ export function CartProvider({
       whatsapp,
       gstPercent,
       add,
+      upsert,
       setQty,
       remove,
       clear,

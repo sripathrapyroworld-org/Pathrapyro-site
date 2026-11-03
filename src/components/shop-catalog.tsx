@@ -35,7 +35,7 @@ export function ShopCatalog({
   eyebrow?: string;
   description?: string;
 }) {
-  const { add, showToast, gstPercent, requireLogin } = useCart();
+  const { upsert, showToast, gstPercent } = useCart();
   const [q, setQ] = useState("");
   const [qty, setQty] = useState<Record<string, number>>({});
   const [openCat, setOpenCat] = useState<string>("all");
@@ -116,12 +116,11 @@ export function ShopCatalog({
   }
 
   function pushToCart() {
-    if (!requireLogin()) return;
     let any = false;
     for (const p of products) {
       const n = qty[p.id] || 0;
       if (n <= 0) continue;
-      add(
+      upsert(
         {
           key: `product:${p.id}`,
           kind: "product",
@@ -137,12 +136,12 @@ export function ShopCatalog({
       );
       any = true;
     }
-    if (any) {
-      setQty({});
-      window.location.href = "/cart";
-    } else {
+    if (!any) {
       showToast("⚠️ Please add quantity to at least one item");
+      return;
     }
+    setQty({});
+    window.location.href = "/cart";
   }
 
   function pickCategory(next: string) {

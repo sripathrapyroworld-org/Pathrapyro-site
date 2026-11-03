@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useCart } from "@/components/cart-provider";
 import { EnquireButton } from "@/components/enquire-button";
 import { TotalsBreakdown } from "@/components/totals-breakdown";
-import { formatInr, mediaUrl } from "@/lib/utils";
+import { formatInr, loginPath, mediaUrl } from "@/lib/utils";
 
 export default function CartPage() {
-  const { items, setQty, remove, totals } = useCart();
+  const { items, setQty, remove, totals, loggedIn } = useCart();
+  const checkoutHref = loggedIn ? "/checkout" : loginPath("/checkout");
 
   return (
     <>
@@ -66,6 +67,7 @@ export default function CartPage() {
                   <p>
                     You can place your order now. If packing or shipping charges apply, our team will update them on
                     your order and confirm the final total.
+                    {!loggedIn && " Login is required only when you place the order."}
                   </p>
                 </div>
               )}
@@ -77,14 +79,14 @@ export default function CartPage() {
               )}
               <Link
                 className="btn btn-primary btn-block"
-                href="/checkout"
+                href={checkoutHref}
                 style={{
                   marginTop: 10,
                   pointerEvents: items.length === 0 ? "none" : "auto",
                   opacity: items.length === 0 ? 0.5 : 1,
                 }}
               >
-                Place Order →
+                {loggedIn ? "Place Order →" : "Login & Place Order →"}
               </Link>
               <Link className="btn btn-outline btn-block" href="/shop" style={{ marginTop: 10 }}>
                 Continue Shopping

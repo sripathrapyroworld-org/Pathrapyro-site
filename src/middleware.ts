@@ -38,8 +38,7 @@ export default auth((req) => {
     }
   }
 
-  const needsCustomer =
-    path.startsWith("/account") || path === "/cart" || path.startsWith("/checkout");
+  const needsCustomer = path.startsWith("/account") || path.startsWith("/checkout");
   if (needsCustomer && (!isLoggedIn || role !== "CUSTOMER")) {
     const url = nextUrl.clone();
     url.pathname = "/login";
